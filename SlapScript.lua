@@ -201,7 +201,7 @@ MiscTab:CreateButton({
 
 MiscTab:CreateToggle({
    Name="Tp player",
-   CurrentValue=false,
+   CurrentValue=false,  
    Callback=function(v)
       if v then
          if Players:FindFirstChild(targetName).Character then
@@ -330,6 +330,10 @@ MiscTab:CreateButton({
         for i,v in pairs(plr.Character:GetChildren()) do
          print("Name: "..v.Name) 
         end
+        for i,v in pairs(plr.Character:FindFirstChild("RightLowerArm"):GetChildren()) do
+         print("Name: "..v.Name) 
+         print("рука")
+        end
    end
 })
 
@@ -439,6 +443,7 @@ SRTab:CreateSlider({
       if plr.Character:FindFirstChild("ItemDetector") then
          plr.Character.ItemDetector.Size = Vector3.new(v, 5, v)
       end
+      SlapAuraHitbox = v
    end,
 })
 
@@ -539,8 +544,8 @@ end
 function setupCharacter3()
 local hrp = plr.Character:WaitForChild("HumanoidRootPart")
 local detector = Instance.new("Part")
-detector.Name = "ItemDetector"
-detector.Size = Vector3.new(SlapAuraHitbox, 5, SlapAuraHitbox)
+detector.Name = "ItemDetector"   
+detector.Size = Vector3.new(SlapAuraHitbox, 10, SlapAuraHitbox)
 detector.Transparency = 0.7
 detector.CanCollide = false
 detector.Anchored = false
@@ -571,12 +576,17 @@ function kilka(hit)
          print(v.Name)
          end
          local glove = plr.Character:FindFirstChildOfClass("Tool").Glove
-         glove.Position = anotherChar.HumanoidRootPart.Position 
+         glove.Position = anotherChar.Head.Position + Vector3.new(0,1.5,0)
          VirtualInputManager:SendMouseButtonEvent(950,550,0,false,game,0)
          targetCD = true
-         task.wait(0.2)
+         plr.Character.ItemDetector.Size = Vector3.new(0.1,0.1,0.1)
+         task.wait(0.3)
          glove.Position = plr.Character:FindFirstChild("Right Arm").Position
-         task.wait(0.7)
+         if hit.Parent:FindFirstChild("FakePart Right Arm") then
+            addToIgnore(hit.Parent)
+         end
+         task.wait(0.6)
+         plr.Character.ItemDetector.Size = Vector3.new(SlapAuraHitbox,10,SlapAuraHitbox)
          targetCD = false
 end
 
@@ -741,6 +751,7 @@ function onInputBegan(input, gameProcessed)
         mouseTarget()
         Childrenoftarget(Mouse.Target)
    end
+   
 end
 
 function plrPos()
@@ -879,10 +890,11 @@ end
 end
 
 function shoot()
-VirtualInputManager:SendMouseButtonEvent(900,500,0,true,game,0)
-task.wait(0.01)
-VirtualInputManager:SendMouseButtonEvent(900,500,0,false,game,0)
+   VirtualInputManager:SendMouseButtonEvent(900,500,0,true,game,0)
+   task.wait(0.01)
+   VirtualInputManager:SendMouseButtonEvent(900,500,0,false,game,0)
 end
+
 
 
 local function getTargetRoot()
@@ -920,10 +932,10 @@ if aimAssist then
             local lookDirection = (targetRoot.Position - headPos).Unit
             
             local targetHeadCFrame = CFrame.lookAt(headPos, headPos + lookDirection)
-         
+            
             neck.C0 = neck.C0:Lerp(
                 CFrame.new(neck.C0.Position) * targetHeadCFrame.Rotation, 
-                SMOOTHNESS * 1.8  
+                SMOOTHNESS * 1.8   
             )
         end
     end
@@ -932,7 +944,7 @@ if not triggerBot then return end
 local target = Mouse.Target
 if not target then return end  
 if onlyHeads then
-   if target.Name == "Head" or target.Name == "HitboxHead" or target.Name == "HitboxHeadSmall"then
+   if target.Name == "Head" or target.Name == "HitboxHead" then
       shoot()
       return
 	end
