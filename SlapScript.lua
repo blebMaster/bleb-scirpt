@@ -574,9 +574,9 @@ function kilka(hit)
          glove.Position = anotherChar.HumanoidRootPart.Position 
          VirtualInputManager:SendMouseButtonEvent(950,550,0,false,game,0)
          targetCD = true
-         task.wait(0.3)
+         task.wait(0.2)
          glove.Position = plr.Character:FindFirstChild("Right Arm").Position
-         task.wait(0.6)
+         task.wait(0.7)
          targetCD = false
 end
 
