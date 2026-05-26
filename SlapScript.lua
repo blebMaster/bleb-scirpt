@@ -752,7 +752,6 @@ function plrPos()
     print(tostring(plr.Character.Torso.CFrame))
 end
 
-print
 function platformChangeStatus()
  platform = not platform
         if platform == false then
