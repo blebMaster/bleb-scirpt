@@ -18,8 +18,8 @@ Rayfield:Notify({
 
 
 --Табы
-local MovementTab = Window:CreateTab("Movement 😎")
-local SBTab = Window:CreateTab("Slap Battles 👍")
+local MovementTab = Window:CreateTab("All games")
+local SBTab = Window:CreateTab("Slap Battles")
 local MiscTab = Window:CreateTab("Other")
 local SRTab = Window:CreateTab("Slap Royale")
 local RivalsTab = Window:CreateTab("Rivals")
@@ -43,8 +43,8 @@ local triggerBot = false
 local onlyHeads = false
 local HandCD = false
 local AIM_ASSIST_RANGE = 250
-local AIM_ASSIST_FOV = 360
-local SMOOTHNESS = 1   -- чем меньше — тем сильнее
+local AIM_ASSIST_FOV = 180
+local SMOOTHNESS = 1   -- чем больше — тем сильнее аим ассист
 local items = {
     ["Bomb"] = Color3.fromRGB(26, 25, 25), 
     ["Bull's essence"] = Color3.fromRGB(77, 29, 0), 
@@ -233,6 +233,8 @@ MovementTab:CreateSlider({
       if hum then hum.WalkSpeed = v end
    end,
 })
+
+
 MovementTab:CreateButton({
    Name="+1 Speed",
    Callback=function()
@@ -262,7 +264,7 @@ MovementTab:CreateButton({
 
 
 
-SBTab:CreateToggle({
+MovementTab:CreateToggle({
    Name="ESP",
    CurrentValue=false,
    Callback=function(a)
@@ -281,7 +283,7 @@ SBTab:CreateToggle({
       end
    end
 })
-SBTab:CreateSlider({
+MovementTab:CreateSlider({
    Name = "Esp Update Cooldown ",
    Range = {1, 20},
    Increment = 1,
@@ -313,9 +315,6 @@ SBTab:CreateToggle({
 })
 
 
-
-
-
 SBTab:CreateButton({
    Name="Tp to Center of Map",
    Callback=function()
@@ -339,8 +338,6 @@ MiscTab:CreateButton({
 
 
 
-
-
 SBTab:CreateToggle({
    Name="AutoFlick ",
    CurrentValue=false,
@@ -360,7 +357,8 @@ SRTab:CreateToggle({
 SRTab:CreateButton({
    Name="spiderMan",
    Callback=function()
-       local stairs = game.Workspace.Map.FiestaFarm.Model
+       local childs = game.Workspace.Map.FiestaFarm:GetChildren()
+       local stairs = childs[5]
        local hrp = plr.Character.HumanoidRootPart
        stairs:PivotTo(hrp.CFrame * CFrame.new(0, 0, -5))
    end
@@ -436,7 +434,7 @@ SRTab:CreateToggle({
 
 SRTab:CreateSlider({
    Name = "Slap Aura Hitbox",
-   Range = {10, 50},
+   Range = {10, 35},
    Increment = 1,
    CurrentValue = 25,
    Callback = function(v)
@@ -470,6 +468,27 @@ RivalsTab:CreateToggle({
       aimAssist = a
    end
 })
+
+RivalsTab:CreateSlider({
+   Name = "AIM ASSIST FOV",
+   Range = {25, 180},
+   Increment = 1,
+   CurrentValue = AIM_ASSIST_FOV ,
+   Callback = function(v)
+      AIM_ASSIST_FOV = v
+   end,
+})
+
+RivalsTab:CreateSlider({
+   Name = "AIM ASSIST STRENGH",
+   Range = {0.1, 1},
+   Increment = 0.05,
+   CurrentValue = SMOOTHNESS ,
+   Callback = function(v)
+      SMOOTHNESS = v
+   end,
+})
+
 RivalsTab:CreateToggle({
    Name="Only heads",
    CurrentValue=false,
@@ -477,6 +496,7 @@ RivalsTab:CreateToggle({
       onlyHeads = a
    end
 })
+
 
 
 --Функции
@@ -905,13 +925,18 @@ local function getTargetRoot()
     
     local character = targetPlayer.Character
     if not character then return nil end
-    
     local humanoid = character:FindFirstChild("Humanoid")
-    local root = character:FindFirstChild("HumanoidRootPart")
-    
+    local root = nil
+    if onlyHeads then
+    root = character:FindFirstChild("Head")
+    else
+    root = character:FindFirstChild("HumanoidRootPart")
+    end 
+   print(root)
     if humanoid and humanoid.Health > 0 and root then
         return root
     end
+ 
     return nil
 end
 
@@ -956,6 +981,4 @@ else
 end
 end)
 delay(5,espUpd())
-
-
 print("готов к работе")
