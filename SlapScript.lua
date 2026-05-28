@@ -71,6 +71,7 @@ local targetName =  nil
 local ignorePlayers = {}
 local skipFlick = false
 local SlapAuraHitbox = 25
+local AimtargetPlayer = nil
 local codes = {
    ["http://www.roblox.com/asset/?id=9648755440"] = "8", --1
    ["http://www.roblox.com/asset/?id=9648765536"] = "2", --2
@@ -358,9 +359,11 @@ SRTab:CreateButton({
    Name="spiderMan",
    Callback=function()
        local childs = game.Workspace.Map.FiestaFarm:GetChildren()
-       local stairs = childs[5]
+       local stairs = childs[32]:Clone()
        local hrp = plr.Character.HumanoidRootPart
-       stairs:PivotTo(hrp.CFrame * CFrame.new(0, 0, -5))
+       stairs:PivotTo(hrp.CFrame * CFrame.new(0, 0, -10))
+
+
    end
 })
 
@@ -460,12 +463,20 @@ RivalsTab:CreateToggle({
       triggerBot = a
    end
 })
-
+RivalsTab:CreateDropdown({
+   Name="Select Player",
+   Options=getPlayers(),
+   Callback=function(opt)
+      local name = typeof(opt)=="table" and opt[1] or opt
+      AimtargetPlayer = name
+   end
+})
 RivalsTab:CreateToggle({
    Name="Aim Assist",
    CurrentValue=false,
    Callback=function(a)
       aimAssist = a
+      plr.Character:FindFirstChildOfClass("Humanoid").AutoRotate = a
    end
 })
 
@@ -918,9 +929,9 @@ end
 
 
 local function getTargetRoot()
-    if not targetName or targetName == "" then return nil end
+    if not AimtargetPlayer or AimtargetPlayer == "" then return nil end
     
-    local targetPlayer = Players:FindFirstChild(targetName)
+    local targetPlayer = Players:FindFirstChild(AimtargetPlayer)
     if not targetPlayer then return nil end
     
     local character = targetPlayer.Character
@@ -940,31 +951,17 @@ local function getTargetRoot()
     return nil
 end
 
-
 RunService.RenderStepped:Connect(function()
 if aimAssist then
   local targetRoot = getTargetRoot()
     if targetRoot then
         local currentCFrame = camera.CFrame
         local targetCFrame = CFrame.lookAt(currentCFrame.Position, targetRoot.Position)
-        
         camera.CFrame = currentCFrame:Lerp(targetCFrame, SMOOTHNESS)
-        
-        if head and head:FindFirstChild("Neck") then
-            local neck = head.Neck
-            
-            local headPos = head.Position
-            local lookDirection = (targetRoot.Position - headPos).Unit
-            
-            local targetHeadCFrame = CFrame.lookAt(headPos, headPos + lookDirection)
-            
-            neck.C0 = neck.C0:Lerp(
-                CFrame.new(neck.C0.Position) * targetHeadCFrame.Rotation, 
-                SMOOTHNESS * 1.8   
-            )
-        end
     end
 end    
+
+
 if not triggerBot then return end
 local target = Mouse.Target
 if not target then return end  
