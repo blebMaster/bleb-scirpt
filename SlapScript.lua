@@ -20,9 +20,10 @@ Rayfield:Notify({
 --Табы
 local MovementTab = Window:CreateTab("All games")
 local SBTab = Window:CreateTab("Slap Battles")
-local MiscTab = Window:CreateTab("Other")
+local FriendsTab = Window:CreateTab("Friends")
 local SRTab = Window:CreateTab("Slap Royale")
 local RivalsTab = Window:CreateTab("Rivals")
+local MiscTab = Window:CreateTab("Other")
 --Сервисы
 local input = game:GetService("UserInputService")
 local Players = game:GetService("Players")
@@ -45,6 +46,7 @@ local HandCD = false
 local AIM_ASSIST_RANGE = 250
 local AIM_ASSIST_FOV = 180
 local SMOOTHNESS = 1   -- чем больше — тем сильнее аим ассист
+local FriendEspColor = Color3.fromRGB(66, 245, 87) 
 local items = {
     ["Bomb"] = Color3.fromRGB(26, 25, 25), 
     ["Bull's essence"] = Color3.fromRGB(77, 29, 0), 
@@ -65,13 +67,18 @@ local items = {
     ["Healing Potion"] = Color3.fromRGB(240, 98, 221),
 
 }
+
+local friends = {"drsygdgdhsj", "Stars3323","dimonraina"}
+local FriendRem = nil
+
 local aimAssist = false
 local youInRagdoll = false
 local targetName =  nil
 local ignorePlayers = {}
 local skipFlick = false
-local SlapAuraHitbox = 25
+local SlapAuraHitbox = 20
 local AimtargetPlayer = nil
+local FriendAdd = nil
 local codes = {
    ["http://www.roblox.com/asset/?id=9648755440"] = "8", --1
    ["http://www.roblox.com/asset/?id=9648765536"] = "2", --2
@@ -90,6 +97,7 @@ local codes = {
    ["http://www.roblox.com/asset/?id=9648738553"] = "8",--15
     
 }
+
 local ItemESP = false
 local camera = Workspace.CurrentCamera
 local function getPlayers()
@@ -275,6 +283,10 @@ MovementTab:CreateToggle({
             if esp then
                if not v.Character:FindFirstChild("Highlight") then
                   Instance.new("Highlight",v.Character)
+                  isFriend = table.find(friends,v.Name)
+                  if isFriend then
+                  v.Character.Highlight.FillColor = FriendEspColor
+                  end
                end
             else
                local h=v.Character:FindFirstChild("Highlight")
@@ -346,6 +358,13 @@ SBTab:CreateToggle({
        autoFlick = not autoFlick
    end
 })
+SBTab:CreateToggle({ 
+   Name="Skip Flick ",
+   CurrentValue=false,
+   Callback=function(v)
+       skipFlick = v
+   end
+})
 
 SRTab:CreateToggle({
    Name="Item ESP",
@@ -366,6 +385,7 @@ SRTab:CreateButton({
 
    end
 })
+
 
 SRTab:CreateButton({
    Name="Tp Code",
@@ -390,6 +410,8 @@ SRTab:CreateToggle({
        notify = v
    end
 })
+
+SRTab:CreateDivider()
 
 SRTab:CreateToggle({
    Name="Auto Slap ",
@@ -437,9 +459,9 @@ SRTab:CreateToggle({
 
 SRTab:CreateSlider({
    Name = "Slap Aura Hitbox",
-   Range = {10, 35},
+   Range = {10, 30},
    Increment = 1,
-   CurrentValue = 25,
+   CurrentValue = 20,
    Callback = function(v)
       if plr.Character:FindFirstChild("ItemDetector") then
          plr.Character.ItemDetector.Size = Vector3.new(v, 5, v)
@@ -448,13 +470,7 @@ SRTab:CreateSlider({
    end,
 })
 
-SRTab:CreateToggle({ 
-   Name="Skip Flick ",
-   CurrentValue=false,
-   Callback=function(v)
-       skipFlick = v
-   end
-})
+SRTab:CreateDivider()
 
 RivalsTab:CreateToggle({
    Name="Triger Bot",
@@ -511,6 +527,10 @@ RivalsTab:CreateToggle({
 
 
 --Функции
+
+
+
+
 
 function setupCharacter()
 local hrp = plr.Character:WaitForChild("HumanoidRootPart")
@@ -577,7 +597,7 @@ local hrp = plr.Character:WaitForChild("HumanoidRootPart")
 local detector = Instance.new("Part")
 detector.Name = "ItemDetector"   
 detector.Size = Vector3.new(SlapAuraHitbox, 10, SlapAuraHitbox)
-detector.Transparency = 0.7
+detector.Transparency = 1
 detector.CanCollide = false
 detector.Anchored = false
 detector.Massless = true
@@ -601,24 +621,32 @@ function kilka(hit)
          if hit.Parent:FindFirstChild("FakePart Right Arm")  then addToIgnore(hit.Parent) return end
          if targetCD == true then return end
          local anotherChar = hit.Parent
-         VirtualInputManager:SendMouseButtonEvent(950,550,0,true,game,0)
-         task.wait(0.1)
-         for i,v in pairs( plr.Character:FindFirstChildOfClass("Tool"):GetChildren()) do
-         print(v.Name)
-         end
+         local isFound = table.find(friends, anotherChar.Parent.Name)
+         if isFound then return end
          local glove = plr.Character:FindFirstChildOfClass("Tool").Glove
-         glove.Position = anotherChar.Head.Position + Vector3.new(0,1.5,0)
-         VirtualInputManager:SendMouseButtonEvent(950,550,0,false,game,0)
-         targetCD = true
-         plr.Character.ItemDetector.Size = Vector3.new(0.1,0.1,0.1)
-         task.wait(0.3)
-         glove.Position = plr.Character:FindFirstChild("Right Arm").Position
-         if hit.Parent:FindFirstChild("FakePart Right Arm") then
-            addToIgnore(hit.Parent)
-         end
+         glove.Position = anotherChar.HumanoidRootPart.Position
+         task.wait(0.1)
+         VirtualInputManager:SendMouseButtonEvent(950,550,0,true,game,0) 
+         targetCD = true            
+         VirtualInputManager:SendMouseButtonEvent(950, 550, 0, true, game, 0)
+         task.wait(0.1)
+         VirtualInputManager:SendMouseButtonEvent(950, 550, 0, false, game, 0)
+         plr.Character.ItemDetector.Transparency = 1
+         task.wait(0.2  )
+         glove.Position = plr.Character:FindFirstChildOfClass("Tool").Handle.Position
+         if anotherChar:FindFirstChild("FakePart Right Arm") then
+            --plr.Character.ItemDetector.Transparency = 0.7
+            addToIgnore(anotherChar)
+         else
+            print("фоточка сделана на расстоянии")
+            print((anotherChar.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude)
+            if anotherChar:FindFirstChild("Highlight") then
+            player.Highlight.FillColor = Color3.fromRGB(255, 187, 0)
+            end
+         end   
          task.wait(0.6)
-         plr.Character.ItemDetector.Size = Vector3.new(SlapAuraHitbox,10,SlapAuraHitbox)
-         targetCD = false
+         --plr.Character.ItemDetector.Transparency = 0.7
+         targetCD = false     
 end
 
 function slap(hit)
@@ -641,6 +669,7 @@ if not hit.Parent:FindFirstChildOfClass("Humanoid") or hit.Parent.Name == "Crate
             HitLater()
          end
          plr.Character.Humanoid.AutoRotate = false
+
          local targetRoot = hit.Parent:FindFirstChild("Head")
          if not root or not targetRoot then
          plr.Character.Humanoid.AutoRotate = true
@@ -778,11 +807,11 @@ end
 
 function onInputBegan(input, gameProcessed)  
   if gameProcessed then return end 
-    if input.KeyCode == Enum.KeyCode.Q then
-        mouseTarget()
-        Childrenoftarget(Mouse.Target)
-   end
-   
+      if input.KeyCode == Enum.KeyCode.Q then
+         mouseTarget()
+         Childrenoftarget(Mouse.Target)
+      end  
+      
 end
 
 function plrPos()
@@ -904,6 +933,10 @@ function espUpd()
             if v~=plr and v.Character then
                if not v.Character:FindFirstChild("Highlight") then
                   Instance.new("Highlight",v.Character)
+                  isFriend = table.find(friends,v.Name)
+                  if isFriend then
+                  v.Character.Highlight.FillColor = FriendEspColor
+                  end
                end
             end   
          end   
@@ -952,18 +985,38 @@ local function getTargetRoot()
 end
 
 RunService.RenderStepped:Connect(function()
-if aimAssist then
-  local targetRoot = getTargetRoot()
-    if targetRoot then
-        local currentCFrame = camera.CFrame
-        local targetCFrame = CFrame.lookAt(currentCFrame.Position, targetRoot.Position)
-        camera.CFrame = currentCFrame:Lerp(targetCFrame, SMOOTHNESS)
-    end
-end    
+    if aimAssist then
+        local targetRoot = getTargetRoot()
+        
+        if targetRoot and plr.Character then
+            local char = plr.Character
+            local head = char:FindFirstChild("Head")
+            local humanoid = char:FindFirstChild("Humanoid")
+            
+            local currentCFrame = camera.CFrame
+            local targetCFrame = CFrame.lookAt(currentCFrame.Position, targetRoot.Position)
+            camera.CFrame = currentCFrame:Lerp(targetCFrame, SMOOTHNESS)
 
-
+            if head and head:FindFirstChild("Neck") then
+                local neck = head.Neck
+                
+                local headPos = head.Position
+                local lookDirection = (targetRoot.Position - headPos).Unit
+                
+                local targetHeadCFrame = CFrame.lookAt(headPos, headPos + lookDirection)
+                
+                -- Плавный поворот головы (чуть быстрее камеры)
+                neck.C0 = neck.C0:Lerp(
+                    CFrame.new(neck.C0.Position) * targetHeadCFrame.Rotation, 
+                    SMOOTHNESS * 1.6
+                )
+            end
+        end
+    end  
 if not triggerBot then return end
 local target = Mouse.Target
+local isFriend = table.find(friends,target.Parent.Name)
+if isFriend then return end 
 if not target then return end  
 if onlyHeads then
    if target.Name == "Head" or target.Name == "HitboxHead" then
@@ -977,5 +1030,90 @@ else
    end
 end
 end)
+
+local PlayersDropown = FriendsTab:CreateDropdown({
+   Name="Select Player to add",
+   Options=getPlayers(),
+   Callback=function(opt)
+      local name = typeof(opt)=="table" and opt[1] or opt
+      FriendAdd = name
+   end
+})
+
+FriendsTab:CreateButton({
+   Name="Add Friend",
+   Callback=function()
+      if FriendAdd then
+         table.insert(friends,FriendAdd)
+            if Players:FindFirstChild(FriendAdd).Character and Players:FindFirstChild(FriendAdd).Character:FindFirstChild("Highlight") then
+            Players:FindFirstChild(FriendAdd).Character.Highlight.FillColor = FriendEspColor
+            end
+         RefreshFriends() 
+         FriendAdd = nil
+      end
+   end   
+})
+
+
+local FriendsDropdown = FriendsTab:CreateDropdown({
+   Name="Select Friend",
+   Options=friends,
+   Callback=function(opt)
+      local name = typeof(opt)=="table" and opt[1] or opt
+      FriendRem = name
+   end
+})
+
+
+FriendsTab:CreateButton({
+   Name="Remove Friend",
+   Callback=function()
+         if FriendRem then
+         local index = table.find(friends,FriendRem)
+         if index then
+	      table.remove(friends, index)
+         end
+            if Players:FindFirstChild(FriendRem).Character:FindFirstChild("Highlight") then
+               Players:FindFirstChild(FriendRem).Character:FindFirstChild("Highlight").FillColor = Color3.fromRGB(255,0,0)
+            end
+         FriendsDropdown:Refresh(friends)   
+         end
+   end
+})
+
+
+local ColorPicker = FriendsTab:CreateColorPicker({
+   Name = "Set Friend Esp Color",
+   Color = FriendEspColor,
+   Callback = function(Value)
+      FriendEspColor = Value
+   end
+})
+
+
+FriendsTab:CreateButton({
+   Name="Set color",
+   Callback=function()
+      print(FriendRem)
+      print(Players:FindFirstChild(FriendRem).Character:FindFirstChild("Highlight"))
+      if not FriendRem or not  Players:FindFirstChild(FriendRem).Character:FindFirstChild("Highlight") then
+      Rayfield:Notify({
+      Title = "Not found friend",
+      Content = "or you dont on esp",
+      Duration = 3,
+      })
+      return
+      end
+      Players:FindFirstChild(FriendRem).Character:FindFirstChild("Highlight").FillColor = FriendEspColor
+   end
+})
+
+
+function RefreshFriends()
+   FriendsDropdown:Refresh(friends)
+end
+
+
+
 delay(5,espUpd())
 print("готов к работе")
