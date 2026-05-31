@@ -67,10 +67,10 @@ local items = {
     ["Healing Potion"] = Color3.fromRGB(240, 98, 221),
 
 }
-
+local SpeedStrengh = 15
 local friends = {"drsygdgdhsj", "Stars3323","dimonraina"}
 local FriendRem = nil
-
+local speedsUsed = false
 local aimAssist = false
 local youInRagdoll = false
 local targetName =  nil
@@ -472,6 +472,38 @@ SRTab:CreateSlider({
 
 SRTab:CreateDivider()
 
+SRTab:CreateSlider({
+   Name = "Speed Strengh",
+   Range = {5, 30},
+   Increment = 1,
+   CurrentValue = SpeedStrengh,
+   Callback = function(v)
+      SpeedStrengh = v
+   end,
+})
+
+
+SRTab:CreateButton({
+   Name="+speed",
+   Callback=function()
+         local leg = plr.Character:FindFirstChild("Right Leg")
+         local leg2 = plr.Character:FindFirstChild("Left Leg")
+         leg.Position = leg2.Position + (leg2.CFrame.RightVector * SpeedStrengh)
+         speedsUsed = true
+   end
+})
+SRTab:CreateButton({
+   Name="Speed reset",
+   Callback=function()
+      if speedsUsed then
+         local object1 = plr.Character:FindFirstChild("Right Leg")
+         local object2 = plr.Character:FindFirstChild("Left Leg")
+         object1.Position = object2.Position + (object2.CFrame.RightVector * 1)
+         test = false
+      end
+   end
+})
+
 RivalsTab:CreateToggle({
    Name="Triger Bot",
    CurrentValue=false,
@@ -552,6 +584,8 @@ weld.Parent = detector
          if ignorePlayers[hit.Parent] or youInRagdoll then return end
          if plr.Character:FindFirstChild("FakePart Right Arm") then youInragdoll() return end
          if hit.Parent:FindFirstChild("FakePart Right Arm")  then addToIgnore(hit.Parent) return end
+         local isFound = table.find(friends, hit.Parent.Name)
+         if isFound then return end
          if targetCD == true or not toolActivate() then return end
          if not skipFlick then
          task.wait(0.1)
@@ -621,7 +655,7 @@ function kilka(hit)
          if hit.Parent:FindFirstChild("FakePart Right Arm")  then addToIgnore(hit.Parent) return end
          if targetCD == true then return end
          local anotherChar = hit.Parent
-         local isFound = table.find(friends, anotherChar.Parent.Name)
+         local isFound = table.find(friends, anotherChar.Name)
          if isFound then return end
          local glove = plr.Character:FindFirstChildOfClass("Tool").Glove
          glove.Position = anotherChar.HumanoidRootPart.Position
@@ -656,6 +690,8 @@ if not hit.Parent:FindFirstChildOfClass("Humanoid") or hit.Parent.Name == "Crate
          if plr.Character:FindFirstChild("FakePart Right Arm") then youInragdoll() return end
          if hit.Parent:FindFirstChild("FakePart Right Arm")  then addToIgnore(hit.Parent) return end
          if targetCD == true then return end
+         local isFound = table.find(friends, hit.Parent.Name)
+         if isFound then return end
          VirtualInputManager:SendMouseButtonEvent(950,550,0,true,game,0)
          print(hit.ClassName)
          if not skipFlick then
@@ -1015,9 +1051,9 @@ RunService.RenderStepped:Connect(function()
     end  
 if not triggerBot then return end
 local target = Mouse.Target
+if not target then return end
 local isFriend = table.find(friends,target.Parent.Name)
-if isFriend then return end 
-if not target then return end  
+if isFriend then return end    
 if onlyHeads then
    if target.Name == "Head" or target.Name == "HitboxHead" then
       shoot()
