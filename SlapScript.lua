@@ -98,9 +98,12 @@ local codes = {
     
 }
 
+local slapAura = false
 local ItemESP = false
 local camera = Workspace.CurrentCamera
-local function getPlayers()
+
+
+function getPlayers()
    local t={}
    for _,v in pairs(Players:GetPlayers()) do
       if v~=lp then table.insert(t,v.Name) end
@@ -339,13 +342,16 @@ SBTab:CreateButton({
 MiscTab:CreateButton({
    Name="Character",
    Callback=function()
-        for i,v in pairs(plr.Character:GetChildren()) do
+      for i,v in pairs(plr.Character.Head.Nametag.Labels:GetChildren()) do
          print("Name: "..v.Name) 
-        end
-        for i,v in pairs(plr.Character:FindFirstChild("RightLowerArm"):GetChildren()) do
-         print("Name: "..v.Name) 
-         print("рука")
-        end
+         print(v.ClassName)
+      end
+   end
+})
+MiscTab:CreateButton({
+   Name="HideName",  
+   Callback=function()
+      plr.Character.Head.Nametag.Labels.TopLabel.Text = "Tencell"
    end
 })
 
@@ -446,13 +452,7 @@ SRTab:CreateToggle({
    Name="Slap Aura ",
    CurrentValue=false,
    Callback=function(v)
-      if v then
-         setupCharacter3()
-      else
-         if plr.Character:FindFirstChild("ItemDetector") then
-         plr.Character.ItemDetector:Destroy()
-         end
-      end
+        slapAura = v
    end
 })
 
@@ -626,62 +626,85 @@ weld.Parent = detector
 end
 
 
-function setupCharacter3()
-local hrp = plr.Character:WaitForChild("HumanoidRootPart")
-local detector = Instance.new("Part")
-detector.Name = "ItemDetector"   
-detector.Size = Vector3.new(SlapAuraHitbox, 10, SlapAuraHitbox)
-detector.Transparency = 1
-detector.CanCollide = false
-detector.Anchored = false
-detector.Massless = true
-detector.Parent = plr.Character
-detector.CFrame = hrp.CFrame
-local weld = Instance.new("Weld")
-weld.Part0 = detector
-weld.Part1 = hrp
-weld.Parent = detector
-   detector.Touched:Connect(function(hit)
-         kilka(hit)
-   end)
-end
+local lastCheck = 0
+
+RunService.Heartbeat:Connect(function()
+    if not slapAura then return end
+    if tick() - lastCheck < 0.1 then return end  -- проверяем ~10 раз в секунду
+    lastCheck = tick()
+
+    if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then return end
+    if not toolChecker() then return end
+    if youInRagdoll then return end
+
+    local myRoot = plr.Character.HumanoidRootPart
+    local myPos = myRoot.Position
+
+    for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+        if otherPlayer == plr then continue end
+        if ignorePlayers[otherPlayer.Character] then continue end
+
+        local char = otherPlayer.Character
+        if not char then continue end
+
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        local root = char:FindFirstChild("HumanoidRootPart")
+
+        if not hum or not root then continue end
+        if hum.Health <= 0 then continue end
+
+        local distance = (root.Position - myPos).Magnitude
+        if distance <= SlapAuraHitbox  then
+            kilka(otherPlayer.Character.HumanoidRootPart)
+            break 
+        end
+    end
+end)
 
 
-function kilka(hit) 
-   if not hit.Parent:FindFirstChildOfClass("Humanoid") or hit.Parent.Name == "Crate" or hit.ClassName == "Tool" then return end
-         if not toolChecker() then return end
-         if ignorePlayers[hit.Parent] or youInRagdoll then return end
-         if plr.Character:FindFirstChild("FakePart Right Arm") then youInragdoll() return end
-         if hit.Parent:FindFirstChild("FakePart Right Arm")  then addToIgnore(hit.Parent) return end
-         if targetCD == true then return end
-         local anotherChar = hit.Parent
-         local isFound = table.find(friends, anotherChar.Name)
-         if isFound then return end
-         local glove = plr.Character:FindFirstChildOfClass("Tool").Glove
-         glove.Position = anotherChar.HumanoidRootPart.Position
-         task.wait(0.1)
-         VirtualInputManager:SendMouseButtonEvent(950,550,0,true,game,0) 
-         targetCD = true            
-         VirtualInputManager:SendMouseButtonEvent(950, 550, 0, true, game, 0)
-         task.wait(0.1)
-         VirtualInputManager:SendMouseButtonEvent(950, 550, 0, false, game, 0)
-         plr.Character.ItemDetector.Transparency = 1
-         task.wait(0.2  )
-         glove.Position = plr.Character:FindFirstChildOfClass("Tool").Handle.Position
-         if anotherChar:FindFirstChild("FakePart Right Arm") then
-            --plr.Character.ItemDetector.Transparency = 0.7
-            addToIgnore(anotherChar)
-         else
-            print("фоточка сделана на расстоянии")
-            print((anotherChar.HumanoidRootPart.Position - plr.Character.HumanoidRootPart.Position).Magnitude)
-            if anotherChar:FindFirstChild("Highlight") then
-            player.Highlight.FillColor = Color3.fromRGB(255, 187, 0)
-            end
-         end   
-         task.wait(0.6)
-         --plr.Character.ItemDetector.Transparency = 0.7
-         targetCD = false     
+function kilka(hit)
+    local targetChar = hit and hit.Parent
+    if not targetChar then return end
+    if not targetChar:FindFirstChildOfClass("Humanoid") or targetChar.Name == "Crate" then return end
+    if not toolChecker() then return end
+    if ignorePlayers[targetChar] or youInRagdoll then return end
+    if plr.Character:FindFirstChild("FakePart Right Arm") then youInragdoll() return end
+    if targetChar:FindFirstChild("FakePart Right Arm") then addToIgnore(targetChar) return end
+    if targetCD then return end
+    local myRoot = plr.Character:FindFirstChild("HumanoidRootPart")
+    local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
+    if not myRoot or not targetRoot then return end
+    targetCD = true
+    local tool = plr.Character:FindFirstChildOfClass("Tool")
+    if not tool then targetCD = false return end
+
+    local glove = tool:FindFirstChild("Glove")
+    if not glove then targetCD = false return end
+    glove.Position = targetChar.Torso.Position 
+    task.wait(0.1)
+    VirtualInputManager:SendMouseButtonEvent(950, 550, 0, true, game, 0)
+    task.wait(0.05)
+    VirtualInputManager:SendMouseButtonEvent(950, 550, 0, false, game, 0)
+    for i = 1,25 do
+      glove.Position = targetChar.Torso.Position 
+      if targetChar:FindFirstChild("FakePart Right Arm") then break end
+      task.wait(0.02)
+    end
+    glove.Position = tool.Handle.Position + (tool.Handle.CFrame.UpVector * 2)
+    task.wait(0.10)
+    if targetChar:FindFirstChild("FakePart Right Arm") then
+        addToIgnore(targetChar)
+    else
+      Rayfield:Notify({
+      Title = "Slap Aura Miss",
+      Content = "Slap Aura make a photo",
+      Duration = 1
+      })
+    end
+   targetCD = false
+
 end
+
 
 function slap(hit)
 if not hit.Parent:FindFirstChildOfClass("Humanoid") or hit.Parent.Name == "Crate" or hit.ClassName == "Tool" then return end
@@ -705,7 +728,6 @@ if not hit.Parent:FindFirstChildOfClass("Humanoid") or hit.Parent.Name == "Crate
             HitLater()
          end
          plr.Character.Humanoid.AutoRotate = false
-
          local targetRoot = hit.Parent:FindFirstChild("Head")
          if not root or not targetRoot then
          plr.Character.Humanoid.AutoRotate = true
@@ -717,6 +739,7 @@ if not hit.Parent:FindFirstChildOfClass("Humanoid") or hit.Parent.Name == "Crate
          plr.Character.Humanoid.AutoRotate = true
          task.wait(0.7)
          targetCD = false
+         
 end
 
 function HitLater(obj)
@@ -746,22 +769,27 @@ function youInragdoll()
 
 end
 function addToIgnore(player)
-   ignorePlayers[player] = true
-   if player:FindFirstChild("Highlight") then
-        player.Highlight.FillColor = Color3.fromRGB(36, 26, 235)
-   end
-   while player:FindFirstChild("FakePart Right Arm") do
-
-   if player.Humanoid.Health <= 0 then
-   break
-   end
-   task.wait(0.1)
-   end
-   task.wait(0.5)
-   ignorePlayers[player] = nil
-    if player:FindFirstChild("Highlight") then
-      player.Highlight.FillColor = Color3.fromRGB(255, 0, 0)
-   end
+   task.spawn(function()
+      ignorePlayers[player] = true
+      
+      if player:FindFirstChild("Highlight") then
+           player.Highlight.FillColor = Color3.fromRGB(36, 26, 235)
+      end
+      
+      while player:FindFirstChild("FakePart Right Arm") do
+          if player.Humanoid.Health <= 0 then
+              break
+          end
+          task.wait(0.1)
+      end
+      
+      task.wait(0.2)
+      ignorePlayers[player] = nil
+      
+      if player:FindFirstChild("Highlight") then
+         player.Highlight.FillColor = Color3.fromRGB(255, 0, 0)
+      end
+   end)
 end
 
 function toolActivate()
@@ -964,6 +992,7 @@ input.InputBegan:Connect(onInputBegan)
 
 function espUpd()
    while task.wait(EspUpdCd) do
+      print(esp)
       if esp then
          for _,v in pairs(Players:GetPlayers()) do
             if v~=plr and v.Character then
@@ -979,6 +1008,7 @@ function espUpd()
       end
    end   
 end   
+
 
 
 function Childrenoftarget(v) 
@@ -1100,6 +1130,12 @@ local FriendsDropdown = FriendsTab:CreateDropdown({
    end
 })
 
+function MakePhoto()
+    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Print, false, game)
+    task.wait(0.05)
+    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Print, false, game)
+end
+
 
 FriendsTab:CreateButton({
    Name="Remove Friend",
@@ -1109,7 +1145,7 @@ FriendsTab:CreateButton({
          if index then
 	      table.remove(friends, index)
          end
-            if Players:FindFirstChild(FriendRem).Character:FindFirstChild("Highlight") then
+            if Players:FindFirstChild(FriendRem).Character and Players:FindFirstChild(FriendRem).Character:FindFirstChild("Highlight") then
                Players:FindFirstChild(FriendRem).Character:FindFirstChild("Highlight").FillColor = Color3.fromRGB(255,0,0)
             end
          FriendsDropdown:Refresh(friends)   
