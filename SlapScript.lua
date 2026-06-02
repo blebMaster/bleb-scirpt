@@ -28,7 +28,6 @@ local plr = Players.LocalPlayer
 local char = plr.Character
 local Mouse = plr:GetMouse()
 local RunService = game:GetService("RunService")
-local VirtualInputManager = game:GetService("VirtualInputManager")
 --variables
 local selectedPlayer = nil
 local platform = false --AntiVoid Platform
@@ -71,14 +70,16 @@ local speedsUsed = false
 local aimAssist = false
 local youInRagdoll = false
 local targetName =  nil
-local ignorePlayers = {}
+local ignorePlayers = {} --Slap aura ignore them
 local skipFlick = false
 local SlapAuraHitbox = 20
 local AimtargetPlayer = nil
 local FriendAdd = nil
 local AutoHeal = false
 local hpHeal = 20
+local lastCheck = 0
 local AutoPerms = false
+local antiRagdollEnabled = false
 local codes = {
    ["http://www.roblox.com/asset/?id=9648755440"] = "8", --1
    ["http://www.roblox.com/asset/?id=9648765536"] = "2", --2
@@ -102,11 +103,17 @@ local Colors = {
     Speed = Color3.fromRGB(60, 255, 100),  
     Jump  = Color3.fromRGB(80, 180, 255)   
 }
+local SlapTp = true
 local slapAura = false
 local ItemESP = false
 local camera = Workspace.CurrentCamera
 local humanoidForHeal = nil
 local SRStats = false
+
+local tpdist = 10
+local tpcd = 2
+local TpSpeed = false
+local SRTp = false
 
 
 function getPlayers()
@@ -418,14 +425,27 @@ SRTab:CreateButton({
    Name="spiderMan",
    Callback=function()
        local childs = game.Workspace.Map.FiestaFarm:GetChildren()
-       local stairs = childs[32]:Clone()
+       local stairs = childs[32]
+       print(stairs)
        local hrp = plr.Character.HumanoidRootPart
        stairs:PivotTo(hrp.CFrame * CFrame.new(0, 0, -10))
-
+       for _, part in ipairs(stairs:GetDescendants()) do
+	   if part:IsA("BasePart") then
+		part.Transparency = 0.9
+	   end
+end
 
    end
 })
 
+
+SRTab:CreateToggle({
+   Name="Anti Ragdoll ",
+   CurrentValue=false,
+   Callback=function(v)
+      antiRagdollEnabled = v
+   end
+})
 
 SRTab:CreateButton({
    Name="Tp Code",
@@ -448,6 +468,13 @@ SRTab:CreateToggle({
    CurrentValue=false,
    Callback=function(v)
        notify = v
+   end
+})
+
+SRTab:CreateButton({
+   Name="Test",
+   Callback=function(v)
+      testFunc()
    end
 })
 
@@ -491,6 +518,14 @@ SRTab:CreateToggle({
    end
 })
 
+SRTab:CreateToggle({
+   Name="Slap Aura Tp",
+   CurrentValue=SlapTp,
+   Callback=function(v)
+      SlapTp = v
+   end
+})
+
 
 SRTab:CreateSlider({
    Name = "Slap Aura Hitbox",
@@ -509,7 +544,7 @@ SRTab:CreateDivider()
 
 SRTab:CreateSlider({
    Name = "Speed Strengh",
-   Range = {5, 30},
+   Range = {5, 50},
    Increment = 1,
    CurrentValue = SpeedStrengh,
    Callback = function(v)
@@ -527,6 +562,7 @@ SRTab:CreateButton({
          speedsUsed = true
    end
 })
+
 SRTab:CreateButton({
    Name="Speed reset",
    Callback=function()
@@ -537,6 +573,33 @@ SRTab:CreateButton({
          test = false
       end
    end
+})
+
+SRTab:CreateToggle({
+   Name="Tp Speeds ",
+   CurrentValue=SRTp,
+   Callback=function(v)
+      SRTp = v
+   end
+})
+
+SRTab:CreateSlider({
+   Name = "Tp Strengh",
+   Range = {3, 15},
+   Increment = 1,
+   CurrentValue = tpdist,
+   Callback = function(v)
+      tpdist = v
+   end,
+})
+SRTab:CreateSlider({
+   Name = "Tp Cooldown",
+   Range = {0.5, 5},
+   Increment = 0.5,
+   CurrentValue = tpcd,
+   Callback = function(v)
+      tpcd = v
+   end,
 })
 
 SRTab:CreateDivider()
@@ -712,8 +775,36 @@ weld.Parent = detector
    end)
 end
 
+function antiRagdoll()
+    if not plr.Character then return end
+    local character = plr.Character
+    for i, part in ipairs(character:GetChildren()) do
+        if part.Name:find("FakePart") then
+            part:Destroy()
+        end
+    end
+    local humanoid = character:FindFirstChild("Humanoid")
+    if humanoid then
+        humanoid.PlatformStand = false
+        humanoid.Sit = false
+        humanoid:ChangeState(Enum.HumanoidStateType.Running)
+    end
+    
+    for index, obj in ipairs(character:GetDescendants()) do
+        if obj:IsA("BallSocketConstraint") or obj:IsA("NoCollisionConstraint") then
+            if obj.Parent and obj.Parent.Name:find("Fake") then
+                obj:Destroy()
+            end
+        end
+    end
+end   
 
-local lastCheck = 0
+RunService.Heartbeat:Connect(function()
+    if not antiRagdollEnabled then return end
+    antiRagdoll()
+end)
+
+
 
 RunService.Heartbeat:Connect(function()
     if not slapAura then return end
@@ -747,7 +838,16 @@ RunService.Heartbeat:Connect(function()
         end
     end
 end)
-
+function tpKilka(myRoot,targetRoot)
+task.spawn(function()
+	local originalCFrame = myRoot.CFrame
+	local targetPosition = targetRoot.Position - (targetRoot.CFrame.LookVector * 5)
+	local teleportCFrame = CFrame.lookAt(targetPosition, targetRoot.Position)
+	myRoot.CFrame = teleportCFrame
+	task.wait(0.5)
+	myRoot.CFrame = originalCFrame
+end)
+end
 
 function kilka(hit)
     local targetChar = hit and hit.Parent
@@ -768,8 +868,11 @@ function kilka(hit)
     local glove = tool:FindFirstChild("Glove")
     if not glove then targetCD = false return end
     glove.Position = targetChar.Head.Position 
+	if SlapTp then
+	tpKilka(myRoot,targetRoot)
+	end
     task.wait(0.1)
-   mouse1press()
+   	mouse1press()
     for i = 1,25 do
       glove.Position = targetChar.Head.Position 
       if targetChar:FindFirstChild("FakePart Right Arm") or (targetRoot.Position - myRoot.Position).Magnitude > 20 then break end
@@ -800,12 +903,11 @@ if not hit.Parent:FindFirstChildOfClass("Humanoid") or hit.Parent.Name == "Crate
          if targetCD == true then return end
          local isFound = table.find(friends, hit.Parent.Name)
          if isFound then return end
-         VirtualInputManager:SendMouseButtonEvent(950,550,0,true,game,0)
+         mouse1click()
          print(hit.ClassName)
          if not skipFlick then
          task.wait(0.1)
          end
-         VirtualInputManager:SendMouseButtonEvent(950,550,0,false,game,0)
          local root = plr.Character:FindFirstChild("HumanoidRootPart")
          print("расстояние рутов" .. tostring(hit.Position.Y - root.Position.Y))
          if  (hit.Position.Y - root.Position.Y) < -1 then return end
@@ -960,8 +1062,16 @@ function onInputBegan(input, gameProcessed)
          mouseTarget()
          Childrenoftarget(Mouse.Target)
       end  
-      
+       if input.KeyCode == Enum.KeyCode.W then
+      TpSpeed= true
+      end
 end
+function onInputEnded(input, gameProcessedEvent)
+ if input.KeyCode == Enum.KeyCode.W then
+  TpSpeed = false
+ end
+end
+
 
 function plrPos()
     print("голова:".. tostring(plr.Character.Head.Position))
@@ -1050,30 +1160,13 @@ return closest.Character
 end
 end
 
-function getNearestPlayer2()
-    local character = plr.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
-    local root = character.HumanoidRootPart
-    local closest = nil
-   for _, other in pairs(game.Players:GetChildren()) do
-      if other ~= plr and other.Character and other.Character:FindFirstChild("HumanoidRootPart") then
-         local dist = (other.Character.HumanoidRootPart.Position - root.Position).Magnitude
-         if dist > 35 then
-            continue
-         end
-         closest = other
-      end
-   end
-if closest then
-return closest.Character
-end
-end
 
 function addSpeed()
 plr.Character.Humanoid.WalkSpeed = plr.Character.Humanoid.WalkSpeed+1
 end
 
 input.InputBegan:Connect(onInputBegan)
+input.InputEnded:Connect(onInputEnded)
 
 function espUpd()
    while task.wait(EspUpdCd) do
@@ -1141,7 +1234,6 @@ RunService.RenderStepped:Connect(function()
 
          if head and head:FindFirstChild("Neck") then
             local neck = head.Neck
-            print("голова повернута")
             local headPos = head.Position
             local lookDirection = (targetRoot.Position - headPos).Unit
                 
@@ -1265,8 +1357,6 @@ end
 
 function getBestHealItem()
    for i,v in pairs(healItems) do
-      print(i)
-      print(v)
       for index, tool in pairs(plr.Backpack:GetChildren()) do
          if v == tool.Name then
             print("Найден ", v)
@@ -1280,10 +1370,59 @@ end
 
 
 
+
+
+
+
+
+
+
+
+
+function tpSpeed()
+task.spawn(function()
+   while task.wait(tpcd) do
+      print("TPspeed", TpSpeed)
+      hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+      
+      for i=1,3 do
+         if not TpSpeed or not hrp or not SRTp then break end
+         
+         local lookVector = hrp.CFrame.LookVector
+         local rayDirection = lookVector * tpdist
+         
+         local raycastParams = RaycastParams.new()
+         raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+         raycastParams.FilterDescendantsInstances = {plr.Character} -- Игнорируем своего персонажа
+         
+         local raycastResult = workspace:Raycast(hrp.Position, rayDirection, raycastParams)
+         
+         if raycastResult then
+            local hitPosition = raycastResult.Position
+            local safePosition = hitPosition - (lookVector * 2) 
+            
+            hrp.CFrame = CFrame.new(safePosition) * (hrp.CFrame - hrp.CFrame.Position)
+         else
+            hrp.CFrame = hrp.CFrame + rayDirection
+         end
+         
+         task.wait(1)
+      end
+   end
+end)
+end
+
+function testFunc()
+ hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+      for i=1,3 do
+      hrp.CFrame = hrp.CFrame +(hrp.CFrame.LookVector * tpdist)
+      task.wait(1)
+      end
+end      
+
 function onItemAdded(item)
    if not AutoPerms then return end
    task.wait(0.2)
-   print("получен предмет", item.Name)
    for i,v in pairs(Permsitems) do
       if v == item.Name then
          if not AutoPerms then print("не включен ") return end
@@ -1330,11 +1469,7 @@ local FriendsDropdown = FriendsTab:CreateDropdown({
    end
 })
 
--- function MakePhoto()
---     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Print, false, game)
---     task.wait(0.05)
---     VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Print, false, game)
--- end
+
 
 
 FriendsTab:CreateButton({
@@ -1366,8 +1501,7 @@ local ColorPicker = FriendsTab:CreateColorPicker({
 FriendsTab:CreateButton({
    Name="Set color",
    Callback=function()
-      print(FriendRem)
-      print(Players:FindFirstChild(FriendRem).Character:FindFirstChild("Highlight"))
+
       if not FriendRem or not  Players:FindFirstChild(FriendRem).Character:FindFirstChild("Highlight") then
       Rayfield:Notify({
       Title = "Not found friend",
@@ -1392,7 +1526,6 @@ function useHealingItem()
    humanoidForHeal:EquipTool(healItem)
    toolActivate()
    task.wait(0.5)
-   print(humanoidForHeal.Health, "Сейчас хп")
    if humanoidForHeal.Health <= hpHeal then
    useHealingItem()
    else
@@ -1407,12 +1540,9 @@ end
 
 
 function updStat()
-print("теееест")
 while true do
-   print(SRStats)
    if SRStats then
       for i,v in pairs(Players:GetChildren()) do
-         print("обновленно")
          updateStats(v)
          task.wait(0.01)
       end
@@ -1424,4 +1554,5 @@ end
 
 delay(5,espUpd)
 delay(5,updStat)
+delay(5,tpSpeed)
 print("готов к работе")
