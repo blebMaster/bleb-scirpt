@@ -1,6 +1,5 @@
 getgenv().RAYFIELD_SECURE = true
 getgenv().RAYFIELD_ASSET_ID = 138361542409015
-
 --Создание ГУИ
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 local Window = Rayfield:CreateWindow({
@@ -72,7 +71,7 @@ local youInRagdoll = false
 local targetName =  nil
 local ignorePlayers = {} --Slap aura ignore them
 local skipFlick = false
-local SlapAuraHitbox = 20
+local SlapAuraHitbox = 15
 local AimtargetPlayer = nil
 local FriendAdd = nil
 local AutoHeal = false
@@ -103,7 +102,7 @@ local Colors = {
     Speed = Color3.fromRGB(60, 255, 100),  
     Jump  = Color3.fromRGB(80, 180, 255)   
 }
-local SlapTp = true
+local SlapTp = false
 local slapAura = false
 local ItemESP = false
 local camera = Workspace.CurrentCamera
@@ -471,12 +470,7 @@ SRTab:CreateToggle({
    end
 })
 
-SRTab:CreateButton({
-   Name="Test",
-   Callback=function(v)
-      testFunc()
-   end
-})
+
 
 
 SRTab:CreateDivider()
@@ -529,9 +523,9 @@ SRTab:CreateToggle({
 
 SRTab:CreateSlider({
    Name = "Slap Aura Hitbox",
-   Range = {10, 30},
+   Range = {10, 25},
    Increment = 1,
-   CurrentValue = 20,
+   CurrentValue = 15,
    Callback = function(v)
       if plr.Character:FindFirstChild("ItemDetector") then
          plr.Character.ItemDetector.Size = Vector3.new(v, 5, v)
@@ -820,7 +814,8 @@ RunService.Heartbeat:Connect(function()
 
     for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
         if otherPlayer == plr then continue end
-        if ignorePlayers[otherPlayer.Character] then continue end
+        local isFriend = table.find(friends, otherPlayer.Name)
+        if ignorePlayers[otherPlayer.Character] or isFriend then continue end
 
         local char = otherPlayer.Character
         if not char then continue end
@@ -844,8 +839,6 @@ task.spawn(function()
 	local targetPosition = targetRoot.Position - (targetRoot.CFrame.LookVector * 5)
 	local teleportCFrame = CFrame.lookAt(targetPosition, targetRoot.Position)
 	myRoot.CFrame = teleportCFrame
-	task.wait(0.5)
-	myRoot.CFrame = originalCFrame
 end)
 end
 
@@ -864,13 +857,13 @@ function kilka(hit)
     targetCD = true
     local tool = plr.Character:FindFirstChildOfClass("Tool")
     if not tool then targetCD = false return end
-
     local glove = tool:FindFirstChild("Glove")
     if not glove then targetCD = false return end
     glove.Position = targetChar.Head.Position 
-	if SlapTp then
-	tpKilka(myRoot,targetRoot)
-	end
+      local distance = (targetRoot.Position - myRoot.Position).Magnitude
+	 if SlapTp and distance > 15 then
+	 tpKilka(myRoot,targetRoot)
+	 end
     task.wait(0.1)
    	mouse1press()
     for i = 1,25 do
@@ -889,6 +882,7 @@ function kilka(hit)
       Duration = 1
       })
     end
+    task.wait(0.50)
    targetCD = false
 
 end
@@ -1412,13 +1406,7 @@ task.spawn(function()
 end)
 end
 
-function testFunc()
- hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
-      for i=1,3 do
-      hrp.CFrame = hrp.CFrame +(hrp.CFrame.LookVector * tpdist)
-      task.wait(1)
-      end
-end      
+  
 
 function onItemAdded(item)
    if not AutoPerms then return end
