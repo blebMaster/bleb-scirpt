@@ -1,7 +1,6 @@
 getgenv().RAYFIELD_SECURE = true
 getgenv().RAYFIELD_ASSET_ID = 138361542409015
 
-
 --Создание ГУИ
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 local Window = Rayfield:CreateWindow({
@@ -15,8 +14,6 @@ Rayfield:Notify({
    Title = "BLEBIK SCRIPT",
    Duration = 2
 })
-
-
 --Табы
 local MovementTab = Window:CreateTab("All games")
 local SBTab = Window:CreateTab("Slap Battles")
@@ -24,7 +21,7 @@ local FriendsTab = Window:CreateTab("Friends")
 local SRTab = Window:CreateTab("Slap Royale")
 local RivalsTab = Window:CreateTab("Rivals")
 local MiscTab = Window:CreateTab("Other")
---Сервисы
+--Services
 local input = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local plr = Players.LocalPlayer
@@ -32,20 +29,19 @@ local char = plr.Character
 local Mouse = plr:GetMouse()
 local RunService = game:GetService("RunService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
---Переменные
+--variables
 local selectedPlayer = nil
-local platform = false
+local platform = false --AntiVoid Platform
 local targetCD = false
 local autoFlick = false
 local esp = false
-local notify = false
+local notify = false -- SR Items Notify
 local EspUpdCd = 3
 local triggerBot = false
 local onlyHeads = false
-local HandCD = false
 local AIM_ASSIST_RANGE = 250
 local AIM_ASSIST_FOV = 180
-local SMOOTHNESS = 1   -- чем больше — тем сильнее аим ассист
+local SMOOTHNESS = 1  --Aim Assist Strengh
 local FriendEspColor = Color3.fromRGB(66, 245, 87) 
 local items = {
     ["Bomb"] = Color3.fromRGB(26, 25, 25), 
@@ -65,10 +61,11 @@ local items = {
     ["Cube of Ice"] = Color3.fromRGB(19, 240, 232),
     ["Tomahawk"] = Color3.fromRGB(109, 115, 115),
     ["Healing Potion"] = Color3.fromRGB(240, 98, 221),
-
 }
+local healItems = {"Apple","Bandage","First Aid Kit","Healing Potion"}
+local Permsitems = {"Bull's essence","Frog Potion","Speed Potion","Boba","Potion of Strength"}
 local SpeedStrengh = 15
-local friends = {"drsygdgdhsj", "Stars3323","dimonraina"}
+local friends = {"drsygdgdhsj", "Stars3323","dimonraina","bleb_master"}
 local FriendRem = nil
 local speedsUsed = false
 local aimAssist = false
@@ -79,6 +76,9 @@ local skipFlick = false
 local SlapAuraHitbox = 20
 local AimtargetPlayer = nil
 local FriendAdd = nil
+local AutoHeal = false
+local hpHeal = 20
+local AutoPerms = false
 local codes = {
    ["http://www.roblox.com/asset/?id=9648755440"] = "8", --1
    ["http://www.roblox.com/asset/?id=9648765536"] = "2", --2
@@ -97,10 +97,16 @@ local codes = {
    ["http://www.roblox.com/asset/?id=9648738553"] = "8",--15
     
 }
-
+local Colors = {
+    Power = Color3.fromRGB(255, 60, 60),  
+    Speed = Color3.fromRGB(60, 255, 100),  
+    Jump  = Color3.fromRGB(80, 180, 255)   
+}
 local slapAura = false
 local ItemESP = false
 local camera = Workspace.CurrentCamera
+local humanoidForHeal = nil
+local SRStats = false
 
 
 function getPlayers()
@@ -134,8 +140,11 @@ end)
 end
 
 if game.Workspace:FindFirstChild("Items") then
+humanoidForHeal = plr.Character:FindFirstChildOfClass("Humanoid")
+
 local ItemService = game.Workspace.Items
 ItemService.ChildAdded:Connect(function(object)
+   task.spawn(function()
    if ItemESP then
       local color = items[object.Name]
       if not object:FindFirstChild("Highlight") then
@@ -177,12 +186,19 @@ ItemService.ChildAdded:Connect(function(object)
       })
       end  
 end)
+end)
+humanoidForHeal.HealthChanged:Connect(function(health)
+if not AutoHeal then return end
+   if health <= 0 then return end
+        if health <= hpHeal then
+         useHealingItem()
+        end
+    end)
 end
 
 
 
-
-
+--GUI Functions
 local Dropdown = MiscTab:CreateDropdown({
    Name="Select Player",
    Options=getPlayers(),
@@ -234,7 +250,7 @@ MiscTab:CreateToggle({
 })
 
 
---Функции В ГУИ
+
 MovementTab:CreateSlider({
    Name = "Speed",
    Range = {10, 50},
@@ -380,6 +396,24 @@ SRTab:CreateToggle({
       ItemESPFunc(ItemESP)
    end
 })
+SRTab:CreateToggle({
+   Name="Players stats ",
+   CurrentValue=false,
+   Callback=function(v)
+         SRStats = v
+         if v then
+            for i,v in pairs(Players:GetChildren()) do 
+               createBillboard(v)
+            end
+         else
+            for i,v in pairs(Players:GetChildren()) do 
+               if v.Character.Head:FindFirstChild("StatsGui") then
+               v.Character.Head:FindFirstChild("StatsGui"):Destroy()
+               end
+            end
+         end
+   end
+})
 SRTab:CreateButton({
    Name="spiderMan",
    Callback=function()
@@ -416,6 +450,7 @@ SRTab:CreateToggle({
        notify = v
    end
 })
+
 
 SRTab:CreateDivider()
 
@@ -503,6 +538,58 @@ SRTab:CreateButton({
       end
    end
 })
+
+SRTab:CreateDivider()
+
+SRTab:CreateToggle({
+   Name="Auto Heal ",
+   CurrentValue=AutoHeal,
+   Callback=function(v)
+      AutoHeal = v
+      if v then
+         if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+         if plr.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then return end
+            if plr.Character:FindFirstChildOfClass("Humanoid").Health <= hpHeal then
+               useHealingItem()
+            end
+         end   
+      end    
+   end
+})
+
+SRTab:CreateSlider({
+   Name = "Auto Heal Minimum",
+   Range = {10, 50},
+   Increment = 1,
+   CurrentValue = hpHeal,
+   Callback = function(v)
+      hpHeal  = v
+   end,
+})
+
+
+SRTab:CreateToggle({
+   Name="Auto Perms",
+   CurrentValue=AutoPerms,
+   Callback=function(v)
+      AutoPerms = v
+      if v then
+         for index, tool in pairs(plr.Backpack:GetChildren()) do
+            for i,v in pairs(Permsitems) do
+               if v == tool.Name then
+                  if not AutoPerms then return end
+                  humanoidForHeal:EquipTool(tool)
+                  task.wait(0.1)
+                  toolActivate()
+               end
+            end
+            task.wait(0.2)
+         end
+         plr.Backpack.ChildAdded:Connect(onItemAdded)
+      end    
+   end
+})
+
 
 RivalsTab:CreateToggle({
    Name="Triger Bot",
@@ -680,14 +767,12 @@ function kilka(hit)
 
     local glove = tool:FindFirstChild("Glove")
     if not glove then targetCD = false return end
-    glove.Position = targetChar.Torso.Position 
+    glove.Position = targetChar.Head.Position 
     task.wait(0.1)
-    VirtualInputManager:SendMouseButtonEvent(950, 550, 0, true, game, 0)
-    task.wait(0.05)
-    VirtualInputManager:SendMouseButtonEvent(950, 550, 0, false, game, 0)
+   mouse1press()
     for i = 1,25 do
-      glove.Position = targetChar.Torso.Position 
-      if targetChar:FindFirstChild("FakePart Right Arm") then break end
+      glove.Position = targetChar.Head.Position 
+      if targetChar:FindFirstChild("FakePart Right Arm") or (targetRoot.Position - myRoot.Position).Magnitude > 20 then break end
       task.wait(0.02)
     end
     glove.Position = tool.Handle.Position + (tool.Handle.CFrame.UpVector * 2)
@@ -780,7 +865,7 @@ function addToIgnore(player)
           if player.Humanoid.Health <= 0 then
               break
           end
-          task.wait(0.1)
+          task.wait(0.01)
       end
       
       task.wait(0.2)
@@ -929,7 +1014,7 @@ end
 
 Mouse.Button1Down:Connect(function()
 if targetCD == true or autoFlick == false then return end
-local closest = getNearestPlayer()
+local closest = getNearestPlayer(15)
 if not closest then return end
 if ignorePlayers[closest] or youInRagdoll then return end
 if plr.Character:FindFirstChild("FakePart Right Arm") then youInragdoll() return end
@@ -946,15 +1031,15 @@ plr.Character.Humanoid.AutoRotate = false
     task.wait(0.7)
     targetCD = false
 end)
-function getNearestPlayer()
+function getNearestPlayer(maxRadius)
     local character = plr.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
     local root = character.HumanoidRootPart
     local closest = nil
-   for _, other in pairs(game.Players:GetChildren()) do
+   for _, other in pairs(Players:GetChildren()) do
       if other ~= plr and other.Character and other.Character:FindFirstChild("HumanoidRootPart") then
          local dist = (other.Character.HumanoidRootPart.Position - root.Position).Magnitude
-         if dist > 15 then
+         if dist > maxRadius then
             continue
          end
          closest = other
@@ -992,7 +1077,6 @@ input.InputBegan:Connect(onInputBegan)
 
 function espUpd()
    while task.wait(EspUpdCd) do
-      print(esp)
       if esp then
          for _,v in pairs(Players:GetPlayers()) do
             if v~=plr and v.Character then
@@ -1019,11 +1103,6 @@ print("Children Class: ".. a.ClassName)
 end
 end
 
-function shoot()
-   VirtualInputManager:SendMouseButtonEvent(900,500,0,true,game,0)
-   task.wait(0.01)
-   VirtualInputManager:SendMouseButtonEvent(900,500,0,false,game,0)
-end
 
 
 
@@ -1042,7 +1121,6 @@ local function getTargetRoot()
     else
     root = character:FindFirstChild("HumanoidRootPart")
     end 
-   print(root)
     if humanoid and humanoid.Health > 0 and root then
         return root
     end
@@ -1051,34 +1129,30 @@ local function getTargetRoot()
 end
 
 RunService.RenderStepped:Connect(function()
-    if aimAssist then
+   if aimAssist then
         local targetRoot = getTargetRoot()
-        
-        if targetRoot and plr.Character then
-            local char = plr.Character
-            local head = char:FindFirstChild("Head")
-            local humanoid = char:FindFirstChild("Humanoid")
-            
-            local currentCFrame = camera.CFrame
-            local targetCFrame = CFrame.lookAt(currentCFrame.Position, targetRoot.Position)
-            camera.CFrame = currentCFrame:Lerp(targetCFrame, SMOOTHNESS)
+      if targetRoot and plr.Character then
+         local char = plr.Character
+         local head = char:FindFirstChild("Head")
+         local humanoid = char:FindFirstChild("Humanoid")
+         local currentCFrame = camera.CFrame
+         local targetCFrame = CFrame.lookAt(currentCFrame.Position, targetRoot.Position)
+         camera.CFrame = currentCFrame:Lerp(targetCFrame, SMOOTHNESS)
 
-            if head and head:FindFirstChild("Neck") then
-                local neck = head.Neck
+         if head and head:FindFirstChild("Neck") then
+            local neck = head.Neck
+            print("голова повернута")
+            local headPos = head.Position
+            local lookDirection = (targetRoot.Position - headPos).Unit
                 
-                local headPos = head.Position
-                local lookDirection = (targetRoot.Position - headPos).Unit
-                
-                local targetHeadCFrame = CFrame.lookAt(headPos, headPos + lookDirection)
-                
-                -- Плавный поворот головы (чуть быстрее камеры)
-                neck.C0 = neck.C0:Lerp(
-                    CFrame.new(neck.C0.Position) * targetHeadCFrame.Rotation, 
-                    SMOOTHNESS * 1.6
-                )
-            end
-        end
-    end  
+            local targetHeadCFrame = CFrame.lookAt(headPos, headPos + lookDirection)
+            neck.C0 = neck.C0:Lerp(
+                  CFrame.new(neck.C0.Position) * targetHeadCFrame.Rotation, 
+                  SMOOTHNESS * 1.6
+            )
+         end
+      end         
+   end  
 if not triggerBot then return end
 local target = Mouse.Target
 if not target then return end
@@ -1086,18 +1160,144 @@ local isFriend = table.find(friends,target.Parent.Name)
 if isFriend then return end    
 if onlyHeads then
    if target.Name == "Head" or target.Name == "HitboxHead" then
-      shoot()
+      mouse1click()
       return
 	end
 else
    if target.Parent:FindFirstChild("HumanoidRootPart") then
-      shoot()
+      mouse1click()
       return
    end
 end
 end)
 
-local PlayersDropown = FriendsTab:CreateDropdown({
+function updateStats(player)
+    local char = player.Character
+    if not char then return end
+    if not char:FindFirstChild("Head") then return end
+    local labels = char.Head:FindFirstChild("StatsGui")
+    if not labels then createBillboard(player) return end
+    local humanoid = char:FindFirstChild("Humanoid")
+    if not humanoid then return end
+    local speed = humanoid.WalkSpeed or "?"
+    local power = char:GetAttribute("Power") or "?"
+    local jump =  humanoid.JumpPower or "?"
+    labels.SpeedLabel.Text = "Speed: " .. tostring(speed)
+    labels.PowerLabel.Text = "Power: " .. tostring(power)
+    labels.JumpLabel.Text  = "Jump: " .. tostring(jump)
+end
+
+
+
+
+
+
+
+
+function createBillboard(player)
+    local head = player.Character and player.Character:FindFirstChild("Head")
+    if not head then return end
+
+    local Billboard = Instance.new("BillboardGui")
+    Billboard.Name = "StatsGui"
+    Billboard.Adornee = head
+    Billboard.AlwaysOnTop = true
+    Billboard.Size = UDim2.new(15, 0, 10, 0) 
+    Billboard.StudsOffset = Vector3.new(0, 6.5, 0)
+    Billboard.MaxDistance = 500                   
+    Billboard.LightInfluence = 0
+    Billboard.Parent = head
+
+    local NameLabel = Instance.new("TextLabel")
+    NameLabel.Name = "NameLabel"
+    NameLabel.Size = UDim2.new(1, 0, 0.25, 0)
+    NameLabel.Position = UDim2.new(0, 0, 0, 0)
+    NameLabel.BackgroundTransparency = 1
+    NameLabel.Text = player.Name
+    NameLabel.TextColor3 = Color3.new(1,1,1)
+    NameLabel.Font = Enum.Font.GothamBold
+    NameLabel.TextStrokeTransparency = 0.3
+    NameLabel.TextStrokeColor3 = Color3.new(0,0,0)
+    NameLabel.TextScaled = true
+    NameLabel.Parent = Billboard
+
+
+    local SpeedLabel = Instance.new("TextLabel")
+    SpeedLabel.Name = "SpeedLabel"
+    SpeedLabel.Size = UDim2.new(1, 0, 0.25, 0)
+    SpeedLabel.Position = UDim2.new(0, 0, 0.25, 0)
+    SpeedLabel.BackgroundTransparency = 1
+    SpeedLabel.TextColor3 = Colors.Speed
+    SpeedLabel.Font = Enum.Font.GothamSemibold
+    SpeedLabel.TextStrokeTransparency = 0.4
+    SpeedLabel.TextStrokeColor3 = Color3.new(0,0,0)
+    SpeedLabel.TextScaled = true 
+    SpeedLabel.Parent = Billboard
+
+
+    local PowerLabel = Instance.new("TextLabel")
+    PowerLabel.Name = "PowerLabel"
+    PowerLabel.Size = UDim2.new(1, 0, 0.25, 0)
+    PowerLabel.Position = UDim2.new(0, 0, 0.50, 0)
+    PowerLabel.BackgroundTransparency = 1
+    PowerLabel.TextColor3 = Colors.Power
+    PowerLabel.Font = Enum.Font.GothamSemibold
+    PowerLabel.TextStrokeTransparency = 0.4
+    PowerLabel.TextStrokeColor3 = Color3.new(0,0,0)
+    PowerLabel.TextScaled = true 
+    PowerLabel.Parent = Billboard
+
+
+    local JumpLabel = Instance.new("TextLabel")
+    JumpLabel.Name = "JumpLabel"
+    JumpLabel.Size = UDim2.new(1, 0, 0.25, 0)
+    JumpLabel.Position = UDim2.new(0, 0, 0.75, 0)
+    JumpLabel.BackgroundTransparency = 1
+    JumpLabel.TextColor3 = Colors.Jump
+    JumpLabel.Font = Enum.Font.GothamSemibold
+    JumpLabel.TextStrokeTransparency = 0.4
+    JumpLabel.TextStrokeColor3 = Color3.new(0,0,0)
+    JumpLabel.TextScaled = true 
+    JumpLabel.Parent = Billboard
+
+    updateStats(player)
+end
+
+function getBestHealItem()
+   for i,v in pairs(healItems) do
+      print(i)
+      print(v)
+      for index, tool in pairs(plr.Backpack:GetChildren()) do
+         if v == tool.Name then
+            print("Найден ", v)
+            return tool
+         end
+      end
+      print(v," Не найден в инвентаре")
+   end
+   print("Не найденно хила")
+end
+
+
+
+function onItemAdded(item)
+   if not AutoPerms then return end
+   task.wait(0.2)
+   print("получен предмет", item.Name)
+   for i,v in pairs(Permsitems) do
+      if v == item.Name then
+         if not AutoPerms then print("не включен ") return end
+            humanoidForHeal:EquipTool(item)
+            task.wait(0.1)
+            toolActivate()
+      end 
+
+   end
+
+end
+
+
+FriendsTab:CreateDropdown({
    Name="Select Player to add",
    Options=getPlayers(),
    Callback=function(opt)
@@ -1130,11 +1330,11 @@ local FriendsDropdown = FriendsTab:CreateDropdown({
    end
 })
 
-function MakePhoto()
-    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Print, false, game)
-    task.wait(0.05)
-    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Print, false, game)
-end
+-- function MakePhoto()
+--     VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Print, false, game)
+--     task.wait(0.05)
+--     VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Print, false, game)
+-- end
 
 
 FriendsTab:CreateButton({
@@ -1185,7 +1385,43 @@ function RefreshFriends()
    FriendsDropdown:Refresh(friends)
 end
 
+function useHealingItem()
+   local healItem = getBestHealItem()
+   if not healItem then return end
+   if not humanoidForHeal then return end
+   humanoidForHeal:EquipTool(healItem)
+   toolActivate()
+   task.wait(0.5)
+   print(humanoidForHeal.Health, "Сейчас хп")
+   if humanoidForHeal.Health <= hpHeal then
+   useHealingItem()
+   else
+      for index, tool in pairs(plr.Backpack:GetChildren()) do
+         if tool:FindFirstChild("Glove") then
+            humanoidForHeal:EquipTool(tool)
+            return
+         end
+      end
+   end
+end
 
 
-delay(5,espUpd())
+function updStat()
+print("теееест")
+while true do
+   print(SRStats)
+   if SRStats then
+      for i,v in pairs(Players:GetChildren()) do
+         print("обновленно")
+         updateStats(v)
+         task.wait(0.01)
+      end
+   end
+   task.wait(1)  
+end
+end
+
+
+delay(5,espUpd)
+delay(5,updStat)
 print("готов к работе")
