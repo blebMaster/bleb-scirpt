@@ -1,6 +1,8 @@
 getgenv().RAYFIELD_SECURE = true
 getgenv().RAYFIELD_ASSET_ID = 138361542409015
---Создание ГУИ
+
+print("запуск blebik script")
+--GUI
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 local Window = Rayfield:CreateWindow({
    Name = "BLEBIK SCRIPT",
@@ -27,6 +29,7 @@ local plr = Players.LocalPlayer
 local char = plr.Character
 local Mouse = plr:GetMouse()
 local RunService = game:GetService("RunService")
+local Storage = game:GetService("ReplicatedStorage")
 --variables
 local selectedPlayer = nil
 local platform = false --AntiVoid Platform
@@ -39,7 +42,6 @@ local triggerBot = false
 local onlyHeads = false
 local AIM_ASSIST_RANGE = 250
 local AIM_ASSIST_FOV = 180
-local SMOOTHNESS = 1  --Aim Assist Strengh
 local FriendEspColor = Color3.fromRGB(66, 245, 87) 
 local items = {
     ["Bomb"] = Color3.fromRGB(26, 25, 25), 
@@ -79,6 +81,8 @@ local hpHeal = 20
 local lastCheck = 0
 local AutoPerms = false
 local antiRagdollEnabled = false
+local SMOOTHNESS = 1
+local SRStats = false
 local codes = {
    ["http://www.roblox.com/asset/?id=9648755440"] = "8", --1
    ["http://www.roblox.com/asset/?id=9648765536"] = "2", --2
@@ -107,21 +111,21 @@ local slapAura = false
 local ItemESP = false
 local camera = Workspace.CurrentCamera
 local humanoidForHeal = nil
-local SRStats = false
 
 local tpdist = 10
 local tpcd = 2
 local TpSpeed = false
 local SRTp = false
 
-
 function getPlayers()
    local t={}
    for _,v in pairs(Players:GetPlayers()) do
       if v~=lp then table.insert(t,v.Name) end
    end
+   table.sort(t)
    return t
 end
+
 
 if game.Workspace:FindFirstChild("Shipments") then
 local CratesService = game.Workspace.Shipments.Crates
@@ -201,7 +205,6 @@ if not AutoHeal then return end
         end
     end)
 end
-
 
 
 --GUI Functions
@@ -379,6 +382,7 @@ MiscTab:CreateButton({
 
 
 
+
 SBTab:CreateToggle({
    Name="AutoFlick ",
    CurrentValue=false,
@@ -408,11 +412,12 @@ SRTab:CreateToggle({
    Callback=function(v)
          SRStats = v
          if v then
-            for i,v in pairs(Players:GetChildren()) do 
+            for i,v in pairs(Players:GetPlayers()) do 
+               print(v.Name)
                createBillboard(v)
             end
          else
-            for i,v in pairs(Players:GetChildren()) do 
+            for i,v in pairs(Players:GetPlayers()) do 
                if v.Character.Head:FindFirstChild("StatsGui") then
                v.Character.Head:FindFirstChild("StatsGui"):Destroy()
                end
@@ -475,22 +480,10 @@ SRTab:CreateToggle({
 
 SRTab:CreateDivider()
 
-SRTab:CreateToggle({
-   Name="Auto Slap ",
-   CurrentValue=false,
-   Callback=function(v)
-       if v then
-         setupCharacter()
-      else
-         if plr.Character:FindFirstChild("ItemDetector") then
-         plr.Character.ItemDetector:Destroy()
-         end
-      end
-   end
-})
+
 
 SRTab:CreateToggle({
-   Name="Auto Slap 1.1 ",
+   Name="Auto Slap ",
    CurrentValue=false,
    Callback=function(v)
       if v then
@@ -533,6 +526,8 @@ SRTab:CreateSlider({
       SlapAuraHitbox = v
    end,
 })
+
+
 
 SRTab:CreateDivider()
 
@@ -684,8 +679,8 @@ RivalsTab:CreateSlider({
 
 RivalsTab:CreateSlider({
    Name = "AIM ASSIST STRENGH",
-   Range = {0.1, 1},
-   Increment = 0.05,
+   Range = {0.5, 1},
+   Increment = 0.1,
    CurrentValue = SMOOTHNESS ,
    Callback = function(v)
       SMOOTHNESS = v
@@ -703,50 +698,6 @@ RivalsTab:CreateToggle({
 
 
 --Функции
-
-
-
-
-
-function setupCharacter()
-local hrp = plr.Character:WaitForChild("HumanoidRootPart")
-local detector = Instance.new("Part")
-detector.Name = "ItemDetector"
-detector.Size = Vector3.new(11, 5, 11)
-detector.Transparency = 0.8
-detector.CanCollide = false
-detector.Anchored = false
-detector.Massless = true
-detector.Parent = plr.Character
-detector.CFrame = hrp.CFrame
-local weld = Instance.new("Weld")
-weld.Part0 = detector
-weld.Part1 = hrp
-weld.Parent = detector
-   detector.Touched:Connect(function(hit)
-       if not hit.Parent:FindFirstChildOfClass("Humanoid") or hit.Parent.Name == "Crate" or hit.ClassName == "Tool" then return end
-         if ignorePlayers[hit.Parent] or youInRagdoll then return end
-         if plr.Character:FindFirstChild("FakePart Right Arm") then youInragdoll() return end
-         if hit.Parent:FindFirstChild("FakePart Right Arm")  then addToIgnore(hit.Parent) return end
-         local isFound = table.find(friends, hit.Parent.Name)
-         if isFound then return end
-         if targetCD == true or not toolActivate() then return end
-         if not skipFlick then
-         task.wait(0.1)
-         end
-         local root = plr.Character:FindFirstChild("HumanoidRootPart")
-         plr.Character.Humanoid.AutoRotate = false
-         local targetRoot = hit.Parent:FindFirstChild("Head")
-         if not root or not targetRoot then return end
-         root.CFrame = CFrame.new(root.Position, Vector3.new(targetRoot.Position.X, root.Position.Y, targetRoot.Position.Z))
-         targetCD = true
-         task.wait(0.2)
-         plr.Character.Humanoid.AutoRotate = true
-         task.wait(0.7)
-         targetCD = false
-   end)
-end
-
 
 
 function setupCharacter2()
@@ -822,17 +773,17 @@ RunService.Heartbeat:Connect(function()
 
         local hum = char:FindFirstChildOfClass("Humanoid")
         local root = char:FindFirstChild("HumanoidRootPart")
-
         if not hum or not root then continue end
         if hum.Health <= 0 then continue end
-
         local distance = (root.Position - myPos).Magnitude
         if distance <= SlapAuraHitbox  then
+            
             kilka(otherPlayer.Character.HumanoidRootPart)
             break 
         end
     end
 end)
+
 function tpKilka(myRoot,targetRoot)
 task.spawn(function()
 	local originalCFrame = myRoot.CFrame
@@ -854,13 +805,14 @@ function kilka(hit)
     local myRoot = plr.Character:FindFirstChild("HumanoidRootPart")
     local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
     if not myRoot or not targetRoot then return end
+    if raycast(myRoot,hit) then return end
     targetCD = true
     local tool = plr.Character:FindFirstChildOfClass("Tool")
     if not tool then targetCD = false return end
     local glove = tool:FindFirstChild("Glove")
     if not glove then targetCD = false return end
-    glove.Position = targetChar.Head.Position 
-      local distance = (targetRoot.Position - myRoot.Position).Magnitude
+    glove.Position = targetChar.Head.Position
+    local distance = (targetRoot.Position - myRoot.Position).Magnitude
 	 if SlapTp and distance > 15 then
 	 tpKilka(myRoot,targetRoot)
 	 end
@@ -886,7 +838,6 @@ function kilka(hit)
    targetCD = false
 
 end
-
 
 function slap(hit)
 if not hit.Parent:FindFirstChildOfClass("Humanoid") or hit.Parent.Name == "Crate" or hit.ClassName == "Tool" then return end
@@ -1052,10 +1003,10 @@ end
 
 function onInputBegan(input, gameProcessed)  
   if gameProcessed then return end 
-      if input.KeyCode == Enum.KeyCode.Q then
-         mouseTarget()
-         Childrenoftarget(Mouse.Target)
-      end  
+      -- if input.KeyCode == Enum.KeyCode.Q then
+      --    mouseTarget()
+      --    Childrenoftarget(Mouse.Target)
+      -- end  
        if input.KeyCode == Enum.KeyCode.W then
       TpSpeed= true
       end
@@ -1155,9 +1106,6 @@ end
 end
 
 
-function addSpeed()
-plr.Character.Humanoid.WalkSpeed = plr.Character.Humanoid.WalkSpeed+1
-end
 
 input.InputBegan:Connect(onInputBegan)
 input.InputEnded:Connect(onInputEnded)
@@ -1234,7 +1182,7 @@ RunService.RenderStepped:Connect(function()
             local targetHeadCFrame = CFrame.lookAt(headPos, headPos + lookDirection)
             neck.C0 = neck.C0:Lerp(
                   CFrame.new(neck.C0.Position) * targetHeadCFrame.Rotation, 
-                  SMOOTHNESS * 1.6
+                  1.6
             )
          end
       end         
@@ -1299,7 +1247,11 @@ function createBillboard(player)
     NameLabel.Size = UDim2.new(1, 0, 0.25, 0)
     NameLabel.Position = UDim2.new(0, 0, 0, 0)
     NameLabel.BackgroundTransparency = 1
+    if player == plr then
+    NameLabel.Text = "Undetected"
+    else
     NameLabel.Text = player.Name
+    end
     NameLabel.TextColor3 = Color3.new(1,1,1)
     NameLabel.Font = Enum.Font.GothamBold
     NameLabel.TextStrokeTransparency = 0.3
@@ -1437,6 +1389,10 @@ FriendsTab:CreateButton({
    Name="Add Friend",
    Callback=function()
       if FriendAdd then
+         if table.find(friends,FriendAdd) then
+            FriendAdd = nil
+            return
+         end
          table.insert(friends,FriendAdd)
             if Players:FindFirstChild(FriendAdd).Character and Players:FindFirstChild(FriendAdd).Character:FindFirstChild("Highlight") then
             Players:FindFirstChild(FriendAdd).Character.Highlight.FillColor = FriendEspColor
@@ -1446,7 +1402,6 @@ FriendsTab:CreateButton({
       end
    end   
 })
-
 
 local FriendsDropdown = FriendsTab:CreateDropdown({
    Name="Select Friend",
@@ -1489,11 +1444,10 @@ local ColorPicker = FriendsTab:CreateColorPicker({
 FriendsTab:CreateButton({
    Name="Set color",
    Callback=function()
-
       if not FriendRem or not  Players:FindFirstChild(FriendRem).Character:FindFirstChild("Highlight") then
       Rayfield:Notify({
       Title = "Not found friend",
-      Content = "or you dont on esp",
+      Content = "or you dont turn on ESP function",
       Duration = 3,
       })
       return
@@ -1527,15 +1481,32 @@ function useHealingItem()
 end
 
 
+
+
+
 function updStat()
 while true do
    if SRStats then
       for i,v in pairs(Players:GetChildren()) do
          updateStats(v)
-         task.wait(0.01)
+         task.wait()
       end
    end
    task.wait(1)  
+end
+end
+
+function raycast(part1,part2)
+local origin = part1.Position
+local direction = part2.Position - origin
+local raycastParams = RaycastParams.new()
+raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+raycastParams.FilterDescendantsInstances = {plr.Character}
+local result = Workspace:Raycast(origin, direction, raycastParams)
+if result then
+   if part2.Parent == result.Instance.Parent then return false else return true end
+else
+   return false
 end
 end
 
