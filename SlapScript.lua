@@ -11,10 +11,6 @@ local Window = Rayfield:CreateWindow({
    ConfigurationSaving = { Enabled = false },
    Theme = "Ocean"
 })
-Rayfield:Notify({
-   Title = "BLEBIK SCRIPT",
-   Duration = 2
-})
 --Табы
 local MovementTab = Window:CreateTab("All games")
 local SBTab = Window:CreateTab("Slap Battles")
@@ -770,16 +766,10 @@ RunService.Heartbeat:Connect(function()
 
         local char = otherPlayer.Character
         if not char then continue end
-
-        local hum = char:FindFirstChildOfClass("Humanoid")
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if not hum or not root then continue end
-        if hum.Health <= 0 then continue end
-        local distance = (root.Position - myPos).Magnitude
-        if distance <= SlapAuraHitbox  then
-            
-            kilka(otherPlayer.Character.HumanoidRootPart)
-            break 
+        local part,dist = getClosestPart(char)
+        if not part then return end
+        if dist <= SlapAuraHitbox then
+            kilka(part)
         end
     end
 end)
@@ -794,10 +784,10 @@ end)
 end
 
 function kilka(hit)
-    local targetChar = hit and hit.Parent
+    if not toolChecker() then return end
+    local targetChar = hit.Parent
     if not targetChar then return end
     if not targetChar:FindFirstChildOfClass("Humanoid") or targetChar.Name == "Crate" then return end
-    if not toolChecker() then return end
     if ignorePlayers[targetChar] or youInRagdoll then return end
     if plr.Character:FindFirstChild("FakePart Right Arm") then youInragdoll() return end
     if targetChar:FindFirstChild("FakePart Right Arm") then addToIgnore(targetChar) return end
@@ -811,7 +801,7 @@ function kilka(hit)
     if not tool then targetCD = false return end
     local glove = tool:FindFirstChild("Glove")
     if not glove then targetCD = false return end
-    glove.Position = targetChar.Head.Position
+    glove.Position = hit.Position
     local distance = (targetRoot.Position - myRoot.Position).Magnitude
 	 if SlapTp and distance > 15 then
 	 tpKilka(myRoot,targetRoot)
@@ -819,7 +809,7 @@ function kilka(hit)
     task.wait(0.1)
    	mouse1press()
     for i = 1,25 do
-      glove.Position = targetChar.Head.Position 
+      glove.Position = hit.Position
       if targetChar:FindFirstChild("FakePart Right Arm") or (targetRoot.Position - myRoot.Position).Magnitude > 20 then break end
       task.wait(0.02)
     end
@@ -837,6 +827,27 @@ function kilka(hit)
     task.wait(0.50)
    targetCD = false
 
+end
+
+function getClosestPart(parent)
+   local playerCharacter = plr.Character
+	local rootPart = playerCharacter:FindFirstChild("HumanoidRootPart")
+	if not rootPart then return nil end
+	
+	local characterPosition = rootPart.Position
+	local closestPart = nil
+	local shortestDistance = math.huge 
+
+	for _, child in ipairs(parent:GetChildren()) do
+		if child:IsA("BasePart") then
+			local distance = (child.Position - characterPosition).Magnitude
+			if distance < shortestDistance then
+				shortestDistance = distance
+				closestPart = child
+			end
+		end
+	end
+	return closestPart, shortestDistance
 end
 
 function slap(hit)
@@ -1503,8 +1514,12 @@ local raycastParams = RaycastParams.new()
 raycastParams.FilterType = Enum.RaycastFilterType.Exclude
 raycastParams.FilterDescendantsInstances = {plr.Character}
 local result = Workspace:Raycast(origin, direction, raycastParams)
+local Enemychar = part2.Parent
 if result then
-   if part2.Parent == result.Instance.Parent then return false else return true end
+   for i,v in pairs(Enemychar:GetDescendants()) do
+      if v == result then return true end
+   end
+   return false
 else
    return false
 end
