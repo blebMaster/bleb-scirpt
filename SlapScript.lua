@@ -9,9 +9,9 @@ local Window = Rayfield:CreateWindow({
    LoadingTitle = "blebik script",
    LoadingSubtitle = "made by blebik",
    ConfigurationSaving = { Enabled = false },
-   Theme = "Ocean"
 })
 
+Window:ChangeTheme("Amethyst")
 --Табы
 local MovementTab = Window:CreateTab({ name = "All games"})
 local SBTab = Window:CreateTab({ name = "Slap Battles"})
@@ -40,6 +40,7 @@ local onlyHeads = false
 local AIM_ASSIST_RANGE = 250
 local AIM_ASSIST_FOV = 180
 local FriendEspColor = Color3.fromRGB(66, 245, 87) 
+local selectedCFG = nil
 local items = {
     ["Bomb"] = Color3.fromRGB(26, 25, 25), 
     ["Bull's essence"] = Color3.fromRGB(77, 29, 0), 
@@ -59,10 +60,11 @@ local items = {
     ["Tomahawk"] = Color3.fromRGB(109, 115, 115),
     ["Healing Potion"] = Color3.fromRGB(240, 98, 221),
 }
+local nameForCfg = nil
 local healItems = {"Apple","Bandage","First Aid Kit","Healing Potion"}
 local Permsitems = {"Bull's essence","Frog Potion","Speed Potion","Boba","Potion of Strength"}
 local SpeedStrengh = 15
-local friends = {"drsygdgdhsj", "Stars3323","dimonraina","bleb_master"}
+local friends = {}
 local FriendRem = nil
 local speedsUsed = false
 local aimAssist = false
@@ -185,13 +187,6 @@ ItemService.ChildAdded:Connect(function(object)
          end
       end   
    end   
-      if notify then
-      Rayfield:Notify({
-      Title = "ITEM SPAWNED",
-      Content = object.Name.. " has spawned",
-      Duration = 1
-      })
-      end  
 end)
 end)
 humanoidForHeal.HealthChanged:Connect(function(health)
@@ -232,28 +227,6 @@ MiscTab:CreateButton({
    end
 })
 
-
-MiscTab:CreateToggle({
-   name="Tp player",
-   value=false,  
-   callback=function(v)
-      if v then
-         if Players:FindFirstChild(targetName).Character then
-            local anotherChar = Players:FindFirstChild(targetName).Character
-            savepos = plr.Character:FindFirstChild("Right Arm").Position
-            plr.Character:FindFirstChild("Right Arm").Position = anotherChar.HumanoidRootPart.Position
-            print(plr.Character:FindFirstChild("Right Arm").Position)
-         end
-      else
-         if savepos then
-            plr.Character:FindFirstChild("Right Arm").Position = savepos
-            savepos = nil
-         else
-         plr.Character:FindFirstChild("Right Arm").Position = plr.Character.Torso.Position
-         end
-      end
-   end
-})
 
 
 MiscTab:CreateButton({
@@ -471,7 +444,7 @@ SRTab:CreateButton({
 SRTab:CreateButton({
    Name="Auto Code",
    Callback=function()
-      Rayfield:Notify({
+   Window:Notify({
    Title ="Code",
    Content=AutoCode(),
    Duration = 5
@@ -828,17 +801,10 @@ function kilka(hit)
     glove.Position = tool.Handle.Position + (tool.Handle.CFrame.UpVector * 2)
     task.wait(0.10)
     if targetChar:FindFirstChild("FakePart Right Arm") then
-        addToIgnore(targetChar)
-    else
-      Rayfield:Notify({
-      Title = "Slap Aura Miss",
-      Content = "Slap Aura make a photo",
-      Duration = 1
-      })
-    end
+      addToIgnore(targetChar)
+    end    
     task.wait(0.50)
     targetCD = false
-
 end
 
 function getClosestPart(parent)
@@ -1117,7 +1083,7 @@ function getNearestPlayer(maxRadius)
     local root = character.HumanoidRootPart
     local closest = nil
    for _, other in pairs(Players:GetChildren()) do
-      if table.find(friends,closest.Name) then continue end 
+      if table.find(friends,other.Name) then continue end 
       if other ~= plr  and other.Character and other.Character:FindFirstChild("HumanoidRootPart") then
          local dist = (other.Character.HumanoidRootPart.Position - root.Position).Magnitude
          if dist > maxRadius then
@@ -1354,7 +1320,6 @@ end
 function tpSpeed()
 task.spawn(function()
    while task.wait(tpcd) do
-      print("TPspeed", TpSpeed)
       hrp = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
       
       for i=1,3 do
@@ -1483,11 +1448,6 @@ FriendsTab:CreateButton({
    Name="Set color",
    Callback=function()
       if not FriendRem or not  Players:FindFirstChild(FriendRem).Character:FindFirstChild("Highlight") then
-      Rayfield:Notify({
-      Title = "Not found friend",
-      Content = "or you dont turn on ESP function",
-      Duration = 3,
-      })
       return
       end
       Players:FindFirstChild(FriendRem).Character:FindFirstChild("Highlight").FillColor = FriendEspColor
