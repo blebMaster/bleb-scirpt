@@ -1,9 +1,9 @@
 getgenv().RAYFIELD_SECURE =  true
-getgenv().RAYFIELD_ASSET_ID = 138361542409015
+-- getgenv().RAYFIELD_ASSET_ID = 138361542409015
 
 print("запуск blebik script")
 --GUI
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/gen2"))()
 local Window = Rayfield:CreateWindow({
    Name = "BLEBIK SCRIPT",
    LoadingTitle = "blebik script",
@@ -13,12 +13,12 @@ local Window = Rayfield:CreateWindow({
 })
 
 --Табы
-local MovementTab = Window:CreateTab("All games")
-local SBTab = Window:CreateTab("Slap Battles")
-local FriendsTab = Window:CreateTab("Friends")
-local SRTab = Window:CreateTab("Slap Royale")
-local RivalsTab = Window:CreateTab("Rivals")
-local MiscTab = Window:CreateTab("Other")
+local MovementTab = Window:CreateTab({ name = "All games"})
+local SBTab = Window:CreateTab({ name = "Slap Battles"})
+local FriendsTab = Window:CreateTab({ name = "Friends"})
+local SRTab = Window:CreateTab({ name = "Slap Royale"})
+local RivalsTab = Window:CreateTab({ name = "Rivals"})
+local MiscTab = Window:CreateTab({ name = "other"})
 --Services
 local input = game:GetService("UserInputService")
 local Players = game:GetService("Players")
@@ -206,24 +206,24 @@ end
 
 --GUI Functions
 local Dropdown = MiscTab:CreateDropdown({
-   Name="Select Player",
-   Options=getPlayers(),
-   Callback=function(opt)
+   name="Select Player",
+   options=getPlayers(),
+   callback=function(opt)
       local name = typeof(opt)=="table" and opt[1] or opt
       targetName = name
    end
 })
 
 MiscTab:CreateButton({
-   Name="Refresh 🔄",
-   Callback=function()
+   name="Refresh 🔄",
+   callback=function()
       Dropdown:Refresh(getPlayers())
    end
 })
 
 MiscTab:CreateButton({
-   Name="tool's childs",
-   Callback=function()
+   name="tool's childs",
+   callback=function()
       local obj = plr.Character:FindFirstChildOfClass("Tool")
       for i,v in pairs(obj:GetChildren()) do
          print("name: " .. v.Name)
@@ -234,9 +234,9 @@ MiscTab:CreateButton({
 
 
 MiscTab:CreateToggle({
-   Name="Tp player",
-   CurrentValue=false,  
-   Callback=function(v)
+   name="Tp player",
+   value=false,  
+   callback=function(v)
       if v then
          if Players:FindFirstChild(targetName).Character then
             local anotherChar = Players:FindFirstChild(targetName).Character
@@ -489,8 +489,6 @@ SRTab:CreateToggle({
 
 
 
-SRTab:CreateDivider()
-
 
 
 SRTab:CreateToggle({
@@ -540,7 +538,6 @@ SRTab:CreateSlider({
 
 
 
-SRTab:CreateDivider()
 
 SRTab:CreateSlider({
    Name = "Speed Strengh",
@@ -602,7 +599,7 @@ SRTab:CreateSlider({
    end,
 })
 
-SRTab:CreateDivider()
+
 
 SRTab:CreateToggle({
    Name="Auto Heal ",
@@ -1557,18 +1554,27 @@ end
 
 
 
+
 local Keybind = MiscTab:CreateKeybind({
    Name = "Sphere of fury bind",
-   CurrentKeybind = "Q",
-   HoldToInteract = false,
+   value = Enum.KeyCode.Q,
+   Hold = false,
    Callback = function()
-       Rayfield:Notify({
-      Title = "bind pressed",
-      Content = "you press bind for sphere of fury",
-      Duration = 1
-      })
+      print("pressed a keybind")
+      for i,v in pairs(plr.Backpack:GetChildren()) do
+         if v.Name == "Sphere of fury" then
+            local obj = plr.Character:FindFirstChildOfClass("Tool")
+            humanoidForHeal:EquipTool(v)
+            task.wait(0.1)
+            mouse1click()
+            if obj then
+               humanoidForHeal:EquipTool(obj)
+            end
+         end
+      end
    end,
 })
+
 
 delay(5,espUpd)
 delay(5,updStat)
