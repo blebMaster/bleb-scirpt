@@ -116,7 +116,7 @@ local SRTp = false
 function getPlayers()
    local t={}
    for _,v in pairs(Players:GetPlayers()) do
-      if v~=lp then table.insert(t,v.Name) end
+      if v~= plr then table.insert(t,v.Name) end
    end
    table.sort(t)
    return t
@@ -251,6 +251,16 @@ MiscTab:CreateToggle({
          plr.Character:FindFirstChild("Right Arm").Position = plr.Character.Torso.Position
          end
       end
+   end
+})
+
+
+MiscTab:CreateButton({
+   Name="Tp to player",
+   Callback=function(v)
+    local targetCFrame = Players:FindFirstChild(targetName).Character:GetPivot()
+    local safeCFrame = targetCFrame * CFrame.new(0, 3, 0)
+    plr.Character:PivotTo(safeCFrame)
    end
 })
 
@@ -414,9 +424,13 @@ SRTab:CreateToggle({
             end
          else
             for i,v in pairs(Players:GetPlayers()) do 
-               if v.Character.Head:FindFirstChild("StatsGui") then
-               v.Character.Head:FindFirstChild("StatsGui"):Destroy()
-               end
+               for index,player in pairs(v:GetChildren()) do
+                  if v.Character.Head:FindFirstChild("StatsGui") then
+                     v.Character.Head:FindFirstChild("StatsGui"):Destroy()
+                  else
+                     break
+                  end
+               end 
             end
          end
    end
@@ -809,7 +823,7 @@ function kilka(hit)
     task.wait(0.1)
    	mouse1press()
     for i = 1,25 do
-      glove.Position = hit.Position
+      glove.Position = hit.Pos   ition
       if targetChar:FindFirstChild("FakePart Right Arm") or (targetRoot.Position - myRoot.Position).Magnitude > 20 then break end
       task.wait(0.02)
     end
@@ -825,7 +839,7 @@ function kilka(hit)
       })
     end
     task.wait(0.50)
-   targetCD = false
+    targetCD = false
 
 end
 
@@ -907,7 +921,7 @@ function youInragdoll()
    end
    task.wait(0.1)
    end
-   task.wait(0.3)
+   task.wait(0.2)
    youInRagdoll = false
 
 end
@@ -1080,7 +1094,7 @@ end
 
 Mouse.Button1Down:Connect(function()
 if targetCD == true or autoFlick == false then return end
-local closest = getNearestPlayer(15)
+local closest = getNearestPlayer(25)
 if not closest then return end
 if ignorePlayers[closest] or youInRagdoll then return end
 if plr.Character:FindFirstChild("FakePart Right Arm") then youInragdoll() return end
@@ -1097,13 +1111,16 @@ plr.Character.Humanoid.AutoRotate = false
     task.wait(0.7)
     targetCD = false
 end)
+
+
 function getNearestPlayer(maxRadius)
     local character = plr.Character
     if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
     local root = character.HumanoidRootPart
     local closest = nil
    for _, other in pairs(Players:GetChildren()) do
-      if other ~= plr and other.Character and other.Character:FindFirstChild("HumanoidRootPart") then
+      if table.find(friends,closest.Name) then continue end 
+      if other ~= plr  and other.Character and other.Character:FindFirstChild("HumanoidRootPart") then
          local dist = (other.Character.HumanoidRootPart.Position - root.Position).Magnitude
          if dist > maxRadius then
             continue
@@ -1386,10 +1403,19 @@ function onItemAdded(item)
 
 end
 
+function getPlayersWithoutFriends()
+   local t={}
+   for _,v in pairs(Players:GetPlayers()) do
+      if v~= plr and not table.find(friends,v.Name) then table.insert(t,v.Name) end
+   end
+   table.sort(t)
+   return t
+end
 
-FriendsTab:CreateDropdown({
+
+local playersToFriends = FriendsTab:CreateDropdown({
    Name="Select Player to add",
-   Options=getPlayers(),
+   Options=getPlayersWithoutFriends(),
    Callback=function(opt)
       local name = typeof(opt)=="table" and opt[1] or opt
       FriendAdd = name
@@ -1410,6 +1436,7 @@ FriendsTab:CreateButton({
             end
          RefreshFriends() 
          FriendAdd = nil
+         playersToFriends:Refresh(getPlayersWithoutFriends())
       end
    end   
 })
@@ -1438,6 +1465,8 @@ FriendsTab:CreateButton({
                Players:FindFirstChild(FriendRem).Character:FindFirstChild("Highlight").FillColor = Color3.fromRGB(255,0,0)
             end
          FriendsDropdown:Refresh(friends)   
+         FriendRem = nil
+         playersToFriends:Refresh(getPlayersWithoutFriends())
          end
    end
 })
@@ -1525,6 +1554,20 @@ else
 end
 end
 
+
+
+local Keybind = MiscTab:CreateKeybind({
+   Name = "Sphere of fury bind",
+   CurrentKeybind = nil,
+   HoldToInteract = false,
+   Callback = function()
+       Rayfield:Notify({
+      Title = "bind pressed",
+      Content = "you press bind for sphere of fury",
+      Duration = 1
+      })
+   end,
+})
 
 delay(5,espUpd)
 delay(5,updStat)
