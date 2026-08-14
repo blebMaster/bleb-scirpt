@@ -1,4 +1,4 @@
-getgenv().RAYFIELD_SECURE = true
+getgenv().RAYFIELD_SECURE =  true
 getgenv().RAYFIELD_ASSET_ID = 138361542409015
 
 print("запуск blebik script")
@@ -11,6 +11,7 @@ local Window = Rayfield:CreateWindow({
    ConfigurationSaving = { Enabled = false },
    Theme = "Ocean"
 })
+
 --Табы
 local MovementTab = Window:CreateTab("All games")
 local SBTab = Window:CreateTab("Slap Battles")
@@ -823,7 +824,7 @@ function kilka(hit)
     task.wait(0.1)
    	mouse1press()
     for i = 1,25 do
-      glove.Position = hit.Pos   ition
+      glove.Position = hit.Position
       if targetChar:FindFirstChild("FakePart Right Arm") or (targetRoot.Position - myRoot.Position).Magnitude > 20 then break end
       task.wait(0.02)
     end
@@ -1558,7 +1559,7 @@ end
 
 local Keybind = MiscTab:CreateKeybind({
    Name = "Sphere of fury bind",
-   CurrentKeybind = nil,
+   CurrentKeybind = "Q",
    HoldToInteract = false,
    Callback = function()
        Rayfield:Notify({
