@@ -191,6 +191,7 @@ ItemService.ChildAdded:Connect(function(object)
    end   
 end)
 end)
+
 humanoidForHeal.HealthChanged:Connect(function(health)
 if not AutoHeal then return end
    if health <= 0 then return end
@@ -639,10 +640,15 @@ SRTab:CreateToggle({
          for index, tool in pairs(plr.Backpack:GetChildren()) do
             for i,v in pairs(Permsitems) do
                if v == tool.Name then
+                  local toolNow = plr.Character:FindFirstChildOfClass("Tool")
                   if not AutoPerms then return end
                   humanoidForHeal:EquipTool(tool)
                   task.wait(0.1)
                   toolActivate()
+                  task.wait(0.1)
+                  if toolNow then
+                     humanoidForHeal:EquipTool(toolNow)
+                  end
                end
             end
             task.wait(0.2)
@@ -656,7 +662,7 @@ SRTab:CreateToggle({
 
 SRTab:CreateKeybind({
    Name = "Sphere of fury bind",
-   value = Enum.KeyCode.Z,
+   value = nil,
    Hold = false,
    Callback = function()
       print("pressed a keybind")
@@ -670,14 +676,14 @@ SRTab:CreateKeybind({
             if plr.Backpack:FindFirstChild(obj.Name) then
                humanoidForHeal:EquipTool(plr.Backpack:FindFirstChild(obj.Name))
             end
-         else
-           Window:Notify({
+            return
+         end
+      end
+      Window:Notify({
                title = "Sphere of fury bind",
                content = "No Sphere of fury in your inventory",
                duration = 5,
             })
-         end
-      end
    end,
 })
 
