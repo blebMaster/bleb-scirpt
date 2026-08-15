@@ -115,6 +115,8 @@ local tpdist = 10
 local tpcd = 2
 local TpSpeed = false
 local SRTp = false
+local TpTolayerName = nil
+
 
 function getPlayers()
    local t={}
@@ -210,7 +212,7 @@ local Dropdown = MiscTab:CreateDropdown({
 })
 
 MiscTab:CreateButton({
-   name="Refresh 🔄",
+   name="Refresh ",
    callback=function()
       Dropdown:Refresh(getPlayers())
    end
@@ -226,59 +228,6 @@ MiscTab:CreateButton({
       end
    end
 })
-
-
-
-MiscTab:CreateButton({
-   Name="Tp to player",
-   Callback=function(v)
-    local targetCFrame = Players:FindFirstChild(targetName).Character:GetPivot()
-    local safeCFrame = targetCFrame * CFrame.new(0, 3, 0)
-    plr.Character:PivotTo(safeCFrame)
-   end
-})
-
-
-
-MovementTab:CreateSlider({
-   Name = "Speed",
-   Range = {10, 50},
-   Increment = 1,
-   CurrentValue = 20,
-   Callback = function(v)
-      local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
-      if hum then hum.WalkSpeed = v end
-   end,
-})
-
-
-MovementTab:CreateButton({
-   Name="+1 Speed",
-   Callback=function()
-        addSpeed()
-   end
-})
-MovementTab:CreateToggle({
-   Name = "NoClip 👻",
-   CurrentValue = false,
-   Callback = function(v)
-      _G.noclip = v
-      game:GetService("RunService").Stepped:Connect(function()
-         if _G.noclip and plr.Character then
-            for _,p in pairs(plr.Character:GetDescendants()) do
-               if p:IsA("BasePart") then p.CanCollide=false end
-            end
-         end
-      end)
-   end,
-})
-MovementTab:CreateButton({
-   Name="-1 Speed",
-   Callback=function()
-        remSpeed()
-   end
-})
-
 
 
 MovementTab:CreateToggle({
@@ -313,6 +262,63 @@ MovementTab:CreateSlider({
       EspUpdCd = v
    end,
 })
+
+local TpDropdown = MovementTab:CreateDropdown({
+   name="Select Player for tp to him",
+   options=getPlayers(),
+   callback=function(opt)
+      local name = typeof(opt)=="table" and opt[1] or opt
+      TpToPlayerName = name
+   end
+})
+
+MovementTab:CreateButton({
+   name="Refresh ",
+   callback=function()
+      TpDropdown:Refresh(getPlayers())
+   end
+})
+
+MovementTab:CreateButton({
+   Name="Tp to player",
+   Callback=function(v)
+    if not TpToPlayerName then return end
+    local targetCFrame = Players:FindFirstChild(TpToPlayerName).Character:GetPivot()
+    local safeCFrame = targetCFrame * CFrame.new(0, 3, 0)
+    plr.Character:PivotTo(safeCFrame)
+   end
+})
+
+
+
+MovementTab:CreateSlider({
+   Name = "Speed",
+   Range = {10, 50},
+   Increment = 1,
+   CurrentValue = 20,
+   Callback = function(v)
+      local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+      if hum then hum.WalkSpeed = v end
+   end,
+})
+
+
+MovementTab:CreateToggle({
+   Name = "NoClip",
+   CurrentValue = false,
+   Callback = function(v)
+      _G.noclip = v
+      game:GetService("RunService").Stepped:Connect(function()
+         if _G.noclip and plr.Character then
+            for _,p in pairs(plr.Character:GetDescendants()) do
+               if p:IsA("BasePart") then p.CanCollide=false end
+            end
+         end
+      end)
+   end,
+})
+
+
 SBTab:CreateToggle({
    Name="AntiVoid Platform ",
    CurrentValue=false,
@@ -647,6 +653,36 @@ SRTab:CreateToggle({
 })
 
 
+
+SRTab:CreateKeybind({
+   Name = "Sphere of fury bind",
+   value = Enum.KeyCode.Z,
+   Hold = false,
+   Callback = function()
+      print("pressed a keybind")
+      for i,v in pairs(plr.Backpack:GetChildren()) do
+         if v.Name == "Sphere of fury" then
+            local obj = plr.Character:FindFirstChildOfClass("Tool")
+            humanoidForHeal:EquipTool(v)
+            task.wait(0.1)
+            toolActivate()
+            task.wait(0.1)
+            if plr.Backpack:FindFirstChild(obj.Name) then
+               humanoidForHeal:EquipTool(plr.Backpack:FindFirstChild(obj.Name))
+            end
+         else
+           Window:Notify({
+               title = "Sphere of fury bind",
+               content = "No Sphere of fury in your inventory",
+               duration = 5,
+            })
+         end
+      end
+   end,
+})
+
+
+
 RivalsTab:CreateToggle({
    Name="Triger Bot",
    CurrentValue=false,
@@ -942,8 +978,6 @@ local tool = plr.Character:FindFirstChildOfClass("Tool")
       if tool.Name == "Glider" then return end
       tool:Activate()
       return true
-   else
-   return nil
    end
 end
 
@@ -1562,26 +1596,6 @@ end
 
 
 
-
-local Keybind = MiscTab:CreateKeybind({
-   Name = "Sphere of fury bind",
-   value = Enum.KeyCode.Q,
-   Hold = false,
-   Callback = function()
-      print("pressed a keybind")
-      for i,v in pairs(plr.Backpack:GetChildren()) do
-         if v.Name == "Sphere of fury" then
-            local obj = plr.Character:FindFirstChildOfClass("Tool")
-            humanoidForHeal:EquipTool(v)
-            task.wait(0.1)
-            mouse1click()
-            if obj then
-               humanoidForHeal:EquipTool(obj)
-            end
-         end
-      end
-   end,
-})
 
 
 delay(5,espUpd)
