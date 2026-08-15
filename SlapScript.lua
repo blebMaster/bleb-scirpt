@@ -136,7 +136,7 @@ CratesService.ChildAdded:Connect(function(object)
 end)
 local MeteorService = game.Workspace.Shipments.Instances
 MeteorService.ChildAdded:Connect(function(object)
-   Rayfield:Notify({
+   Window:Notify({
    Title = "METEOR SPAWNED",
    Content="где то появился метеорит",
    Duration = 5
@@ -347,10 +347,11 @@ SBTab:CreateButton({
 MiscTab:CreateButton({
    Name="Character",
    Callback=function()
-      for i,v in pairs(plr.Character.Head.Nametag.Labels:GetChildren()) do
+      for i,v in pairs(plr.Character:GetChildren()) do
          print("Name: "..v.Name) 
          print(v.ClassName)
       end
+      
    end
 })
 MiscTab:CreateButton({
@@ -375,6 +376,28 @@ SBTab:CreateToggle({
    CurrentValue=false,
    Callback=function(v)
        skipFlick = v
+   end
+})
+
+
+
+SBTab:CreateButton({ 
+   Name="Collect all Slapple ",
+   Callback=function()
+      local skipped = 0
+      for i,slapple in pairs(game.Workspace.Arena.island5.Slapples:GetChildren()) do
+         local res = CollectSlapple(slapple)
+         if not res then
+         skipped += 1
+         end
+      end
+      if skipped == 10 then
+         Window:Notify({
+         title = "Slap Collect debug",
+         content = "No slapple on the server",
+         duration = 5,
+      })
+      end
    end
 })
 
@@ -445,9 +468,9 @@ SRTab:CreateButton({
    Name="Auto Code",
    Callback=function()
    Window:Notify({
-   Title ="Code",
-   Content=AutoCode(),
-   Duration = 5
+   title ="Code",
+   content=AutoCode(),
+   duration = 5
 })
    end
 })
@@ -992,10 +1015,10 @@ end
 
 function onInputBegan(input, gameProcessed)  
   if gameProcessed then return end 
-      -- if input.KeyCode == Enum.KeyCode.Q then
-      --    mouseTarget()
-      --    Childrenoftarget(Mouse.Target)
-      -- end  
+       if input.KeyCode == Enum.KeyCode.Q then
+          mouseTarget()
+          Childrenoftarget(Mouse.Target)
+      end  
        if input.KeyCode == Enum.KeyCode.W then
       TpSpeed= true
       end
@@ -1026,7 +1049,7 @@ function platformChangeStatus()
         else
         local plat = Instance.new("Part")
             plat.Position = Vector3.new(0,-15,0)
-            plat.Size = Vector3.new(2000,0.5,2000)
+            plat.Size = Vector3.new(20000,0.5,20000)
             plat.CanCollide = true
             plat.Anchored = true
             plat.Transparency = 0.5
@@ -1102,6 +1125,31 @@ end
 input.InputBegan:Connect(onInputBegan)
 input.InputEnded:Connect(onInputEnded)
 
+
+function inArena()
+   if not plr.Character:FindFirstChild("isInArena").Value and not plr.Backpack:FindFirstChildOfClass("Tool") then
+      plr.Character:PivotTo(CFrame.new(-1210,330,4))
+      task.wait(1)
+       if not plr.Character:FindFirstChild("isInArena").Value and not plr.Backpack:FindFirstChildOfClass("Tool") then 
+            inArena()
+       end
+   end
+end
+
+function CollectSlapple(obj)
+      inArena()
+      if obj:FindFirstChildOfClass("MeshPart").Transparency == 1 then return false end
+      plr.Character:PivotTo(obj:FindFirstChildOfClass("MeshPart").CFrame)
+      plr.Character.HumanoidRootPart.Anchored = true
+      task.wait(0.2)
+      plr.Character.HumanoidRootPart.Anchored = false
+      task.wait(0.5)
+      if obj:FindFirstChildOfClass("MeshPart").Transparency == 0 then
+         CollectSlapple(obj)
+         return "не удача"
+      end
+      return true
+end
 function espUpd()
    while task.wait(EspUpdCd) do
       if esp then
