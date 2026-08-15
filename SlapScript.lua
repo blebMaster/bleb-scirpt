@@ -638,18 +638,16 @@ SRTab:CreateToggle({
       AutoPerms = v
       if v then
          for index, tool in pairs(plr.Backpack:GetChildren()) do
+            local toolNow = plr.Character:FindFirstChildOfClass("Tool")
             for i,v in pairs(Permsitems) do
                if v == tool.Name then
-                  local toolNow = plr.Character:FindFirstChildOfClass("Tool")
-                  if not AutoPerms then return end
                   humanoidForHeal:EquipTool(tool)
                   task.wait(0.1)
                   toolActivate()
-                  task.wait(0.1)
-                  if toolNow then
-                     humanoidForHeal:EquipTool(toolNow)
-                  end
                end
+            end
+            if toolNow then
+               humanoidForHeal:EquipTool(plr.Backpack:FindFirstChild(toolNow.Name))
             end
             task.wait(0.2)
          end
@@ -658,6 +656,34 @@ SRTab:CreateToggle({
    end
 })
 
+
+
+SRTab:CreateKeybind({
+   Name = "Forcefield Crystal bind",
+   value = nil,
+   Hold = false,
+   Callback = function()
+      print("pressed a keybind")
+      for i,v in pairs(plr.Backpack:GetChildren()) do
+         if v.Name == "Forcefield Crystal" then
+            local obj = plr.Character:FindFirstChildOfClass("Tool")
+            humanoidForHeal:EquipTool(v)
+            task.wait(0.1)
+            toolActivate()
+            task.wait(0.1)
+            if plr.Backpack:FindFirstChild(obj.Name) then
+               humanoidForHeal:EquipTool(plr.Backpack:FindFirstChild(obj.Name))
+            end
+            return
+         end
+      end
+      Window:Notify({
+               title = "Forcefield Crystal bind",
+               content = "No Forcefield Crystal in your inventory",
+               duration = 5,
+            })
+   end,
+})
 
 
 SRTab:CreateKeybind({
@@ -686,7 +712,6 @@ SRTab:CreateKeybind({
             })
    end,
 })
-
 
 
 RivalsTab:CreateToggle({
@@ -1444,14 +1469,16 @@ function onItemAdded(item)
    task.wait(0.2)
    for i,v in pairs(Permsitems) do
       if v == item.Name then
-         if not AutoPerms then print("не включен ") return end
-            humanoidForHeal:EquipTool(item)
-            task.wait(0.1)
-            toolActivate()
+         local tool = plr.Character:FindFirstChildOfClass("Tool")
+         humanoidForHeal:EquipTool(item)
+         task.wait(0.1)
+         toolActivate()
+         task.wait(0.1)
+         if toolNow then
+            humanoidForHeal:EquipTool(plr.Backpack:FindFirstChild(toolNow.Name))
+         end
       end 
-
    end
-
 end
 
 function getPlayersWithoutFriends()
