@@ -11,13 +11,18 @@ function inArena()
        end
    end
 end
-
-
-
-function teleportToNewServer()
-    local placeId = game.PlaceId
-    print(placeId)
-    TeleportService:Teleport(placeId, plr)
+function tp()
+    
+ local placeId = game.PlaceId
+    local options = Instance.new("TeleportOptions")
+    
+    local success, result = pcall(function()
+        return TeleportService:Teleport(placeId, plr, options)
+    end)
+    
+    if not success then
+        warn("Ошибка телепортации: " .. tostring(result))
+    end
 end
 
 
@@ -39,7 +44,7 @@ function sborslapov()
    end
    plr.Character.HumanoidRootPart.Anchored = false
    task.wait(2)
-   teleportToNewServer()
+   tp()
 end
 
 
