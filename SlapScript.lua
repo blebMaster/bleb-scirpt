@@ -1450,18 +1450,18 @@ end
 function onItemAdded(item)
    if not AutoPerms then return end
    task.wait(0.2)
-   for i,v in pairs(Permsitems) do
+    local tool = plr.Character:FindFirstChildOfClass("Tool")
+    for i,v in pairs(Permsitems) do
       if v == item.Name then
-         local tool = plr.Character:FindFirstChildOfClass("Tool")
          humanoidForHeal:EquipTool(item)
          task.wait(0.1)
          toolActivate()
          task.wait(0.1)
-         if tool then
-            humanoidForHeal:EquipTool(plr.Backpack:FindFirstChild(tool.Name))
-         end
       end 
    end
+    if tool then
+        humanoidForHeal:EquipTool(plr.Backpack:FindFirstChild(tool.Name))
+    end
 end
 
 function getPlayersWithoutFriends()
