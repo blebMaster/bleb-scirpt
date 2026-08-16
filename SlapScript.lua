@@ -439,23 +439,6 @@ SRTab:CreateToggle({
          end
    end
 })
-SRTab:CreateButton({
-   Name="spiderMan",
-   Callback=function()
-       local childs = game.Workspace.Map.FiestaFarm:GetChildren()
-       local stairs = childs[32]
-       print(stairs)
-       local hrp = plr.Character.HumanoidRootPart
-       stairs:PivotTo(hrp.CFrame * CFrame.new(0, 0, -10))
-       for _, part in ipairs(stairs:GetDescendants()) do
-	   if part:IsA("BasePart") then
-		part.Transparency = 0.9
-	   end
-end
-
-   end
-})
-
 
 SRTab:CreateToggle({
    Name="Anti Ragdoll ",
@@ -1474,8 +1457,8 @@ function onItemAdded(item)
          task.wait(0.1)
          toolActivate()
          task.wait(0.1)
-         if toolNow then
-            humanoidForHeal:EquipTool(plr.Backpack:FindFirstChild(toolNow.Name))
+         if tool then
+            humanoidForHeal:EquipTool(plr.Backpack:FindFirstChild(tool.Name))
          end
       end 
    end
