@@ -465,7 +465,7 @@ SRTab:CreateButton({
    end
 })
 SRTab:CreateToggle({
-   Name="Notify ",
+   Name="Item Spawn Notify ",
    CurrentValue=false,
    Callback=function(v)
        notify = v
@@ -537,7 +537,7 @@ SRTab:CreateSlider({
 
 
 SRTab:CreateButton({
-   Name="+speed",
+   Name="ACtivate Speed",
    Callback=function()
          local leg = plr.Character:FindFirstChild("Right Leg")
          local leg2 = plr.Character:FindFirstChild("Left Leg")
