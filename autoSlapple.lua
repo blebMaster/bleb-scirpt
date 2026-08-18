@@ -12,7 +12,6 @@ function inArena()
    end
 end
 function tp()
-    
  local placeId = game.PlaceId
     local options = Instance.new("TeleportOptions")
     
@@ -43,8 +42,8 @@ function sborslapov()
      CollectSlapple(slapple)
    end
    plr.Character.HumanoidRootPart.Anchored = false
-   task.wait(2)
-   tp()
+--    task.wait(2)
+--    tp()
 end
 
 
