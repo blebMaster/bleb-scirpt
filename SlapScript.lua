@@ -537,7 +537,7 @@ SRTab:CreateSlider({
 
 
 SRTab:CreateButton({
-   Name="ACtivate Speed",
+   Name="Aсtivate Speed",
    Callback=function()
          local leg = plr.Character:FindFirstChild("Right Leg")
          local leg2 = plr.Character:FindFirstChild("Left Leg")
@@ -846,6 +846,7 @@ function kilka(hit)
     local targetChar = hit.Parent
     if not targetChar then return end
     if not targetChar:FindFirstChildOfClass("Humanoid") or targetChar.Name == "Crate" then return end
+    if targetChar:FindFirstChildOfClass("ForceField") then return end
     if ignorePlayers[targetChar] or youInRagdoll then return end
     if plr.Character:FindFirstChild("FakePart Right Arm") then youInragdoll() return end
     if targetChar:FindFirstChild("FakePart Right Arm") then addToIgnore(targetChar) return end
@@ -1602,10 +1603,12 @@ local result = Workspace:Raycast(origin, direction, raycastParams)
 local Enemychar = part2.Parent
 if result then
    for i,v in pairs(Enemychar:GetDescendants()) do
-      if v == result then return true end
+      if v == result then print("[RAYCAST INFO] можно бить") return false end
    end
-   return false
+   print("[RAYCAST INFO] не найденно этот парт у противника")
+   return true
 else
+    print("[RAYCAST INFO] нету припятсвий")
    return false
 end
 end
