@@ -542,6 +542,8 @@ SRTab:CreateButton({
          local leg = plr.Character:FindFirstChild("Right Leg")
          local leg2 = plr.Character:FindFirstChild("Left Leg")
          leg.Position = leg2.Position + (leg2.CFrame.RightVector * SpeedStrengh)
+         leg.CanCollide = false
+         leg.CanTouch = false
          speedsUsed = true
    end
 })
@@ -553,7 +555,9 @@ SRTab:CreateButton({
          local object1 = plr.Character:FindFirstChild("Right Leg")
          local object2 = plr.Character:FindFirstChild("Left Leg")
          object1.Position = object2.Position + (object2.CFrame.RightVector * 1)
-         test = false
+         object1.CanCollide = true
+         object1.CanTouch = true
+         speedsUsed = false
       end
    end
 })
@@ -1451,18 +1455,16 @@ end
 function onItemAdded(item)
    if not AutoPerms then return end
    task.wait(0.2)
-    local tool = plr.Character:FindFirstChildOfClass("Tool")
-    for i,v in pairs(Permsitems) do
-      if v == item.Name then
-         humanoidForHeal:EquipTool(item)
-         task.wait(0.1)
-         toolActivate()
-         task.wait(0.1)
-      end 
+   local tool = plr.Character:FindFirstChildOfClass("Tool")
+   if table.find(Permsitems, item.Name) then
+      humanoidForHeal:EquipTool(item)
+      task.wait(0.1)
+      toolActivate()
+      task.wait(0.1)
+      if tool then
+         humanoidForHeal:EquipTool(plr.Backpack:FindFirstChild(tool.Name))
+      end
    end
-    if tool then
-        humanoidForHeal:EquipTool(plr.Backpack:FindFirstChild(tool.Name))
-    end
 end
 
 function getPlayersWithoutFriends()
@@ -1603,12 +1605,10 @@ local result = Workspace:Raycast(origin, direction, raycastParams)
 local Enemychar = part2.Parent
 if result then
    for i,v in pairs(Enemychar:GetDescendants()) do
-      if v == result then print("[RAYCAST INFO] можно бить") return false end
+      if v == result.Instance then return false end
    end
-   print("[RAYCAST INFO] не найденно этот парт у противника")
    return true
 else
-    print("[RAYCAST INFO] нету припятсвий")
    return false
 end
 end
