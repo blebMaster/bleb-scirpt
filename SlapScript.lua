@@ -332,7 +332,7 @@ SBTab:CreateToggle({
         else
         local plat = Instance.new("Part")
             plat.Position = Vector3.new(0,-15,0)
-            plat.Size = Vector3.new(2000,0.5,2000)
+            plat.Size = Vector3.new(25000,0.7,25000)
             plat.CanCollide = true
             plat.Anchored = true
             plat.Transparency = 0.5
@@ -870,17 +870,20 @@ function kilka(hit)
 	 tpKilka(myRoot,targetRoot)
 	 end
     task.wait(0.1)
-   	mouse1press()
+    mouse1press()
     for i = 1,25 do
       glove.Position = hit.Position
       if targetChar:FindFirstChild("FakePart Right Arm") or (targetRoot.Position - myRoot.Position).Magnitude > 20 then break end
       task.wait(0.02)
     end
+    plr.Character.Humanoid.AutoRotate = false
+     myRoot.CFrame = CFrame.new(myRoot.Position, Vector3.new(targetRoot.Position.X, myRoot.Position.Y, targetRoot.Position.Z))
     glove.Position = tool.Handle.Position + (tool.Handle.CFrame.UpVector * 2)
     task.wait(0.10)
     if targetChar:FindFirstChild("FakePart Right Arm") then
       addToIgnore(targetChar)
     end    
+   plr.Character.Humanoid.AutoRotate = true
     task.wait(0.50)
     targetCD = false
 end
@@ -1076,6 +1079,7 @@ function onInputBegan(input, gameProcessed)
       TpSpeed= true
       end
 end
+
 function onInputEnded(input, gameProcessedEvent)
  if input.KeyCode == Enum.KeyCode.W then
   TpSpeed = false
@@ -1127,9 +1131,7 @@ local target = Mouse.Target
   end
 end  
 
-function remSpeed()
-plr.Character.Humanoid.WalkSpeed = plr.Character.Humanoid.WalkSpeed-1
-end
+
 
 
 Mouse.Button1Down:Connect(function()
