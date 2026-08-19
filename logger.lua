@@ -46,7 +46,7 @@ oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
             print("Был вызван Grab но был перехвачен и отправленно: safeLogTemplate ")
             return oldNamecall(self, safeLogTemplate)
         end
-        if not string.find(path, "ChatService") and not string.find(path, "RobloxGui") and string.find(path, "Grab")  then
+        if not string.find(path, "ChatService") and not string.find(path, "RobloxGui")  then
             local args = table.pack(...) 
             local argCount = args.n
             print("----------------------------------------")
