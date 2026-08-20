@@ -3,6 +3,16 @@ local plr = Players.LocalPlayer
 local TeleportService = game:GetService("TeleportService")
 
 function inArena()
+   if not plr.Character then
+      task.wait(1)
+      inArena()
+      return
+   end
+   if not plr.Character:FindFirstChild("isInArena") then
+      task.wait(1)
+      inArena()
+      return
+   end
    if not plr.Character:FindFirstChild("isInArena").Value and not plr.Backpack:FindFirstChildOfClass("Tool") then
       plr.Character:PivotTo(CFrame.new(-1210,330,4))
       task.wait(1)
@@ -12,6 +22,7 @@ function inArena()
    end
 end
 function tp()
+    
  local placeId = game.PlaceId
     local options = Instance.new("TeleportOptions")
     
@@ -42,8 +53,8 @@ function sborslapov()
      CollectSlapple(slapple)
    end
    plr.Character.HumanoidRootPart.Anchored = false
---    task.wait(2)
---    tp()
+   task.wait(2)
+   tp()
 end
 
 
