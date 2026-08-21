@@ -332,7 +332,7 @@ SBTab:CreateToggle({
         else
         local plat = Instance.new("Part")
             plat.Position = Vector3.new(0,-15,0)
-            plat.Size = Vector3.new(25000,0.7,25000)
+            plat.Size = Vector3.new(2048 ,0.7,2048 )
             plat.CanCollide = true
             plat.Anchored = true
             plat.Transparency = 0.5
@@ -811,7 +811,7 @@ end)
 
 RunService.Heartbeat:Connect(function()
     if not slapAura then return end
-    if tick() - lastCheck < 0.1 then return end  -- проверяем ~10 раз в секунду
+    if tick() - lastCheck < 0.1 then return end
     lastCheck = tick()
 
     if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then return end
@@ -1086,15 +1086,6 @@ function onInputEnded(input, gameProcessedEvent)
  end
 end
 
-
-function plrPos()
-    print("голова:".. tostring(plr.Character.Head.Position))
-    print(tostring(plr.Character.Head.CFrame))
-    print("ХРП:"..tostring(plr.Character.HumanoidRootPart.Position))
-    print(tostring(plr.Character.HumanoidRootPart.CFrame))
-    print("торсо:".. tostring(plr.Character.Torso.Position))
-    print(tostring(plr.Character.Torso.CFrame))
-end
 
 function platformChangeStatus()
  platform = not platform
@@ -1463,7 +1454,7 @@ function onItemAdded(item)
       task.wait(0.1)
       toolActivate()
       task.wait(0.1)
-      if tool then
+      if tool  and plr.Backpack:FindFirstChild(tool.Name) then
          humanoidForHeal:EquipTool(plr.Backpack:FindFirstChild(tool.Name))
       end
    end
