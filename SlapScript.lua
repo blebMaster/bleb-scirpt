@@ -871,13 +871,13 @@ function kilka(hit)
 	 end
     task.wait(0.1)
     mouse1press()
+    plr.Character.Humanoid.AutoRotate = false
+     myRoot.CFrame = CFrame.new(myRoot.Position, Vector3.new(targetRoot.Position.X, myRoot.Position.Y, targetRoot.Position.Z))
     for i = 1,25 do
       glove.Position = hit.Position
       if targetChar:FindFirstChild("FakePart Right Arm") or (targetRoot.Position - myRoot.Position).Magnitude > 20 then break end
       task.wait(0.02)
     end
-    plr.Character.Humanoid.AutoRotate = false
-     myRoot.CFrame = CFrame.new(myRoot.Position, Vector3.new(targetRoot.Position.X, myRoot.Position.Y, targetRoot.Position.Z))
     glove.Position = tool.Handle.Position + (tool.Handle.CFrame.UpVector * 2)
     task.wait(0.10)
     if targetChar:FindFirstChild("FakePart Right Arm") then
