@@ -1,41 +1,53 @@
-local oldNamecall
-
 
 local safeLogTemplate = {
-    ["MessageInfo"] = {
-        [1] = "GrabLocal active"
-    },
-    ["MessageError"] = {},
-    ["MessageWarning"] = {},
-    ["MessageOutput"] = {
-        [1] = "[TomahawkVFX]: Client listener initialized",
-        [2] = "[SecondTracker] initialized"
-    }
+    ["MessageInfo"] = {
+        [1] = "GrabLocal active"
+    },
+    ["MessageError"] = {},
+    ["MessageWarning"] = {},
+    ["MessageOutput"] = {
+        [1] = "[TomahawkVFX]: Client listener initialized",
+        [2] = "[SecondTracker] initialized"
+    }
 }
 
+
+local function formatTable(tbl, depth)
+    depth = depth or 0
+    if depth > 3 then return "{...}" end
+    local result = {}
+    for k, v in pairs(tbl) do
+        local key = type(k) == "string" and string.format("[%q]", k) or string.format("[%s]", tostring(k))
+        local val
+        if type(v) == "table" then val = formatTable(v, depth + 1)
+        elseif type(v) == "string" then val = string.format("%q", v)
+        else val = tostring(v) end
+        table.insert(result, key .. " = " .. val)
+    end
+    return "{" .. table.concat(result, ", ") .. "}"
+end
+
+local oldNamecall
 oldNamecall = hookmetamethod(game, "__namecall", newcclosure(function(self, ...)
-    local method = getnamecallmethod()
-   
-    if checkcaller() then
-        setnamecallmethod(method)
-        return oldNamecall(self, ...)
-    end
+    local method = getnamecallmethod()
 
-    if (method == "FireServer" or method == "InvokeServer") then
-        local path = "Unknown"
-        pcall(function()
-            path = self:GetFullName()
-        end)
+    if (method == "FireServer" or method == "InvokeServer") then
+        if checkcaller() then 
+            setnamecallmethod(method)
+            return oldNamecall(self, ...) 
+        end
 
-        if string.find(path, "Remotes.Grab") then
-            setnamecallmethod(method)
-            print("подмена Grab на безопастный шаблон")
-            return oldNamecall(self, safeLogTemplate)
-        end
-    end
-   
-    setnamecallmethod(method)
-    return oldNamecall(self, ...)
+        local path = "Unknown"
+        pcall(function()
+            path = self:GetFullName()
+        end)
+        if  string.find(path, "Remotes.Grab") then
+            setnamecallmethod(method)
+            print("Был вызван Grab но был перехвачен и отправленно: safeLogTemplate ")
+            return oldNamecall(self, safeLogTemplate)
+        end
+    end
+    
+    setnamecallmethod(method)
+    return oldNamecall(self, ...)
 end))
-
-print("[Spoofer]: Скрипт очищен, подмена логов работает в фоновом режиме!")
