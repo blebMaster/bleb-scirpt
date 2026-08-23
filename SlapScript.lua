@@ -186,7 +186,7 @@ ItemService.ChildAdded:Connect(function(object)
          label.TextScaled = false
          label.TextSize = 18
          label.Font = Enum.Font.SourceSansBold
-         if ItemESP then 
+         if notify then 
              Window:Notify({
                title = "Item has spawned",
                content = object.Name,
@@ -543,22 +543,18 @@ SRTab:CreateSlider({
 })
 
 
-SRTab:CreateButton({
-   Name="Aсtivate Speed",
-   Callback=function()
+SRTab:CreateToggle({
+   Name="Speed hack ",
+   CurrentValue=false,
+   Callback=function(v)
+       if v then
          local leg = plr.Character:FindFirstChild("Right Leg")
          local leg2 = plr.Character:FindFirstChild("Left Leg")
          leg.Position = leg2.Position + (leg2.CFrame.RightVector * SpeedStrengh)
          leg.CanCollide = false
          leg.CanTouch = false
          speedsUsed = true
-   end
-})
-
-SRTab:CreateButton({
-   Name="Speed reset",
-   Callback=function()
-      if speedsUsed then
+       else
          local object1 = plr.Character:FindFirstChild("Right Leg")
          local object2 = plr.Character:FindFirstChild("Left Leg")
          object1.Position = object2.Position + (object2.CFrame.RightVector * 1)
@@ -566,8 +562,10 @@ SRTab:CreateButton({
          object1.CanTouch = true
          speedsUsed = false
       end
+      speedsUsed = v
    end
 })
+
 
 SRTab:CreateToggle({
    Name="Tp Speeds ",
@@ -967,16 +965,27 @@ end
 
 function youInragdoll()
    youInRagdoll = true
-   while plr.Character:FindFirstChild("FakePart Right Arm") do
-   if plr.Character.Humanoid.Health <= 0 then
-   break
+    if speedsUsed then
+      local leg = plr.Character:FindFirstChild("Right Leg")
+      local leg2 = plr.Character:FindFirstChild("Left Leg")
+      leg.Position = leg2.Position + (leg2.CFrame.RightVector * 1)
+      leg.CanCollide = true
+      leg.CanTouch = true
    end
-   task.wait(0.1)
-   end
-   task.wait(0.2)
-   youInRagdoll = false
 
+   while plr.Character:FindFirstChild("FakePart Right Arm") do
+   if plr.Character.Humanoid.Health <= 0 then break end
+   task.wait(0.1)
+   end 
+   if speedsUsed then
+      leg.Position = leg2.Position + (leg2.CFrame.RightVector * SpeedStrengh)
+      leg.CanCollide = false
+      leg.CanTouch = false
+   end
+   youInRagdoll = false
 end
+
+
 function addToIgnore(player)
    task.spawn(function()
       ignorePlayers[player] = true
