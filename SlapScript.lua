@@ -186,6 +186,13 @@ ItemService.ChildAdded:Connect(function(object)
          label.TextScaled = false
          label.TextSize = 18
          label.Font = Enum.Font.SourceSansBold
+         if ItemESP then 
+             Window:Notify({
+               title = "Item has spawned",
+               content = object.Name,
+               duration = 3,
+            })
+         end            
          end
       end   
    end   
