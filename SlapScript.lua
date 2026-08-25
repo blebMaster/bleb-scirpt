@@ -1179,8 +1179,8 @@ end
 function smartHumanizedTurn(target)
     local targetHRP = target:FindFirstChild("HumanoidRootPart")
     local HRP = plr.Character:FindFirstChild("HumanoidRootPart")
-    if not HRP or not targetHRP or not toolChecker() then return end
-    local startCFrame = HRP.CFrame
+    if not HRP or not targetHRP  then return end
+    local startPos = HRP.Position
     local targetCFrame = CFrame.lookAt(HRP.Position, Vector3.new(targetHRP.Position.X, HRP.Position.Y, targetHRP.Position.Z))
     local alpha = 0
     local time = 0
@@ -1188,7 +1188,7 @@ function smartHumanizedTurn(target)
 
     targetCD = true
     plr.Character.Humanoid.AutoRotate = false
-    while alpha < 0.90 do
+    while alpha < targetAlpha do
       if target:FindFirstChild("FakePart Right Arm")  then addToIgnore(target) break end
       if youInRagdoll then break end
       if ignorePlayers[target] then break end
@@ -1215,10 +1215,11 @@ function smartHumanizedTurn(target)
         task.wait(0.01)
     end
     print(time)
-    task.wait(1 - 0.02* time)
     plr.Character.Humanoid.AutoRotate = true
+    task.wait(1 - 0.02* time)
     targetCD = false
 end
+
 
 
 
