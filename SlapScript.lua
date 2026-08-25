@@ -1184,8 +1184,7 @@ function smartHumanizedTurn(target)
     local targetCFrame = CFrame.lookAt(HRP.Position, Vector3.new(targetHRP.Position.X, HRP.Position.Y, targetHRP.Position.Z))
     local alpha = 0
     local time = 0
-    local cd = math.random(1,3)/100
-    local targetAlpha = math.random(88, 97)/ 100
+    local targetAlpha = math.random(90, 100)/ 100
 
     targetCD = true
     plr.Character.Humanoid.AutoRotate = false
@@ -1193,7 +1192,6 @@ function smartHumanizedTurn(target)
       if target:FindFirstChild("FakePart Right Arm")  then addToIgnore(target) break end
       if youInRagdoll then break end
       if ignorePlayers[target] then break end
-      local cd = math.random(1,5)/100
         local targetHRP = target:FindFirstChild("HumanoidRootPart")
         local targetCFrame = CFrame.lookAt(HRP.Position, Vector3.new(targetHRP.Position.X, HRP.Position.Y, targetHRP.Position.Z))
 
@@ -1207,13 +1205,6 @@ function smartHumanizedTurn(target)
        
         local multiple = math.random(100000,150000)
         local microNoise = math.random(100, 10000)/ multiple
-        while alpha + step + microNoise >= 1 do
-            if alpha < 0.75 then
-               step = math.random(1, 15) / 100
-            else
-               step = math.random(1, 10) / 100
-            end 
-        end
         alpha = alpha + step + microNoise
         time += 1
         print(alpha)
@@ -1221,11 +1212,10 @@ function smartHumanizedTurn(target)
             break
         end
         HRP.CFrame = HRP.CFrame:Lerp(targetCFrame, alpha)
-        task.wait(cd)
-        cd = math.random(1,3)/100
+        task.wait(0.01)
     end
     print(time)
-    task.wait(0.5)
+    task.wait(1 - 0.02* time)
     plr.Character.Humanoid.AutoRotate = true
     targetCD = false
 end
