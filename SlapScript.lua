@@ -110,7 +110,8 @@ local slapAura = false
 local ItemESP = false
 local camera = Workspace.CurrentCamera
 local humanoidForHeal = nil
-
+local bhop = false
+local pressedD = false
 local tpdist = 10
 local tpcd = 2
 local TpSpeed = false
@@ -235,6 +236,22 @@ MiscTab:CreateButton({
          print("type:".. v.ClassName)
       end
    end
+})
+
+
+MiscTab:CreateToggle({
+   Name = "BHop",
+   CurrentValue = false,
+   Callback = function(v)
+      bhop = v 
+      if not v then
+         local leg = plr.Character:FindFirstChild("Right Leg")
+         local leg2 = plr.Character:FindFirstChild("Left Leg")
+         leg.CanCollide = true
+         leg.CanTouch = true
+         leg.Position = leg2.Position + (leg2.CFrame.RightVector * 1)
+      end
+   end,
 })
 
 
@@ -813,11 +830,24 @@ RunService.Heartbeat:Connect(function()
 end)
 
 
+RunService.Heartbeat:Connect(function()
+   if bhop then
+      local leg = plr.Character:FindFirstChild("Right Leg")
+      local leg2 = plr.Character:FindFirstChild("Left Leg")
+      leg.CanCollide = false
+      leg.CanTouch = false
+      if pressedD then
+          leg.Position = leg2.Position + (leg2.CFrame.RightVector * SpeedStrengh)
+      else
+          leg.Position = leg2.Position - (leg2.CFrame.RightVector * SpeedStrengh)
+      end
+   end
+end)
+
+
 
 RunService.Heartbeat:Connect(function()
     if not slapAura then return end
-    if tick() - lastCheck < 0.1 then return end
-    lastCheck = tick()
 
     if not plr.Character or not plr.Character:FindFirstChild("HumanoidRootPart") then return end
     if not toolChecker() then return end
@@ -844,7 +874,7 @@ end)
 function tpKilka(myRoot,targetRoot)
 task.spawn(function()
 	local originalCFrame = myRoot.CFrame
-	local targetPosition = targetRoot.Position - (targetRoot.CFrame.LookVector * 5)
+	local targetPosition = targetRoot.Position - (targetRoot.CFrame.LookVector * 3)
 	local teleportCFrame = CFrame.lookAt(targetPosition, targetRoot.Position)
 	myRoot.CFrame = teleportCFrame
 end)
@@ -965,17 +995,16 @@ end
 
 function youInragdoll()
    youInRagdoll = true
-    if speedsUsed then
+    if speedsUsed  then
       local leg = plr.Character:FindFirstChild("Right Leg")
       local leg2 = plr.Character:FindFirstChild("Left Leg")
       leg.Position = leg2.Position + (leg2.CFrame.RightVector * 1)
       leg.CanCollide = true
       leg.CanTouch = true
    end
-
    while plr.Character:FindFirstChild("FakePart Right Arm") do
    if plr.Character.Humanoid.Health <= 0 then break end
-   task.wait(0.1)
+   task.wait()
    end 
    if speedsUsed then
       leg.Position = leg2.Position + (leg2.CFrame.RightVector * SpeedStrengh)
@@ -1091,14 +1120,20 @@ function onInputBegan(input, gameProcessed)
           mouseTarget()
           Childrenoftarget(Mouse.Target)
       end  
-       if input.KeyCode == Enum.KeyCode.W then
+      if input.KeyCode == Enum.KeyCode.W then
       TpSpeed= true
+      end
+      if input.KeyCode == Enum.KeyCode.D then
+      pressedD = true
       end
 end
 
 function onInputEnded(input, gameProcessedEvent)
  if input.KeyCode == Enum.KeyCode.W then
   TpSpeed = false
+ end
+  if input.KeyCode == Enum.KeyCode.D then
+  pressedD = false
  end
 end
 
