@@ -1187,7 +1187,7 @@ function smartHumanizedTurn(target)
     local alpha = 0
     local time = 0
     local cd = math.random(1,3)/100
-
+    
 
     targetCD = true
     plr.Character.Humanoid.AutoRotate = false
@@ -1205,9 +1205,16 @@ function smartHumanizedTurn(target)
         else
             step = math.random(1, 10) / 100
         end 
-        local multiple = math.random(100000,125000)
+       
+        local multiple = math.random(100000,150000)
         local microNoise = math.random(100, 10000)/ multiple
-        
+        while alpha + step + microNoise > 1 do
+            if alpha < 0.75 then
+               step = math.random(1, 15) / 100
+            else
+               step = math.random(1, 10) / 100
+            end 
+        end
         alpha = alpha + step + microNoise
         time += 1
         print(alpha)
@@ -1247,14 +1254,18 @@ function getNearestHumanoidRootPart()
             end
         end
     end
-    return nearestPlayer , nearestPlayer.Character
+    if nearestPlayer then
+    return nearestPlayer,  nearestPlayer.Character
+    else
+      return nearestPlayer
+     end 
 end
 
 
 Mouse.Button1Down:Connect(function()
 if targetCD == true or autoFlick == false then return end
 local closest,Enemychar = getNearestHumanoidRootPart()
-if not closest then return end
+if not closest or not Enemychar then return end
 if ignorePlayers[Enemychar] or youInRagdoll then return end
 if plr.Character:FindFirstChild("FakePart Right Arm") then youInragdoll() return end
 if closest.Character:FindFirstChild("FakePart Right Arm")  then addToIgnore(Enemychar) return end
