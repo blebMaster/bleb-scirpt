@@ -995,9 +995,9 @@ end
 
 function youInragdoll()
    youInRagdoll = true
+   local leg = plr.Character:FindFirstChild("Right Leg")
+   local leg2 = plr.Character:FindFirstChild("Left Leg")
     if speedsUsed  then
-      local leg = plr.Character:FindFirstChild("Right Leg")
-      local leg2 = plr.Character:FindFirstChild("Left Leg")
       leg.Position = leg2.Position + (leg2.CFrame.RightVector * 1)
       leg.CanCollide = true
       leg.CanTouch = true
@@ -1176,46 +1176,111 @@ end
 
 
 
+function smartHumanizedTurn(target)
+    local targetHRP = target:FindFirstChild("HumanoidRootPart")
+    local HRP = plr.Character:FindFirstChild("HumanoidRootPart")
+    print(HRP)
+    print(targetHRP)
+    if not HRP or not targetHRP or not toolChecker() then return end
+    local startCFrame = HRP.CFrame
+    local targetCFrame = CFrame.lookAt(HRP.Position, Vector3.new(targetHRP.Position.X, HRP.Position.Y, targetHRP.Position.Z))
+    local alpha = 0
+    local time = 0
+    local cd = math.random(1,3)/100
+
+
+    targetCD = true
+    plr.Character.Humanoid.AutoRotate = false
+    while alpha < 0.90 do
+      if target:FindFirstChild("FakePart Right Arm")  then addToIgnore(target) end
+      if ignorePlayers[target] then break end
+      local cd = math.random(1,5)/100
+        local targetHRP = target:FindFirstChild("HumanoidRootPart")
+        local targetCFrame = CFrame.lookAt(HRP.Position, Vector3.new(targetHRP.Position.X, HRP.Position.Y, targetHRP.Position.Z))
+
+        local step = 0
+        
+        if alpha < 0.75 then
+            step = math.random(1, 15) / 100
+        else
+            step = math.random(1, 10) / 100
+        end 
+        local multiple = math.random(100000,125000)
+        local microNoise = math.random(100, 10000)/ multiple
+        
+        alpha = alpha + step + microNoise
+        time += 1
+        print(alpha)
+        if alpha >= 0.9 then
+            break
+        end
+        HRP.CFrame = HRP.CFrame:Lerp(targetCFrame, alpha)
+        task.wait(cd)
+        cd = math.random(1,3)/100
+    end
+    print(time)
+    task.wait(0.5)
+    plr.Character.Humanoid.AutoRotate = true
+    targetCD = false
+end
+
+
+
+function getNearestHumanoidRootPart()
+    local myRoot = plr.Character and plr.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return nil end
+
+    local nearestPlayer = nil
+    local shortestDistance = math.huge 
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player == plr then continue end 
+        local enemyChar = player.Character 
+        local enemyRoot = enemyChar and enemyChar:FindFirstChild("HumanoidRootPart")
+        local enemyHumanoid = enemyChar and enemyChar:FindFirstChildOfClass("Humanoid")
+        
+        if enemyRoot and enemyHumanoid and enemyHumanoid.Health > 0 then
+            if raycast(myRoot, enemyRoot) then continue end
+            local distance = (myRoot.Position - enemyRoot.Position).Magnitude
+            if distance < shortestDistance and distance < 25 then
+                shortestDistance = distance
+                nearestPlayer = player    
+            end
+        end
+    end
+    return nearestPlayer , nearestPlayer.Character
+end
+
+
 Mouse.Button1Down:Connect(function()
 if targetCD == true or autoFlick == false then return end
-local closest = getNearestPlayer(25)
+local closest,Enemychar = getNearestHumanoidRootPart()
 if not closest then return end
-if ignorePlayers[closest] or youInRagdoll then return end
+if ignorePlayers[Enemychar] or youInRagdoll then return end
 if plr.Character:FindFirstChild("FakePart Right Arm") then youInragdoll() return end
-if closest:FindFirstChild("FakePart Right Arm")  then addToIgnore(closest) return end
-task.wait(0.1)
-local root = plr.Character:FindFirstChild("Head")
-plr.Character.Humanoid.AutoRotate = false
-    local targetRoot = closest:FindFirstChild("Head")
-    if not root or not targetRoot then return end
-    root.CFrame = CFrame.new(root.Position, Vector3.new(targetRoot.Position.X, root.Position.Y, targetRoot.Position.Z))
-    targetCD = true
-    task.wait(0.2)
-    plr.Character.Humanoid.AutoRotate = true
-    task.wait(0.7)
-    targetCD = false
+if closest.Character:FindFirstChild("FakePart Right Arm")  then addToIgnore(Enemychar) return end
+smartHumanizedTurn(Enemychar)
 end)
 
 
-function getNearestPlayer(maxRadius)
-    local character = plr.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
-    local root = character.HumanoidRootPart
-    local closest = nil
-   for _, other in pairs(Players:GetChildren()) do
-      if table.find(friends,other.Name) then continue end 
-      if other ~= plr  and other.Character and other.Character:FindFirstChild("HumanoidRootPart") then
-         local dist = (other.Character.HumanoidRootPart.Position - root.Position).Magnitude
-         if dist > maxRadius then
-            continue
-         end
-         closest = other
-      end
-   end
-if closest then
-return closest.Character
-end
-end
+-- function getNearestPlayer(maxRadius)
+--     local character = plr.Character
+--     if not character or not character:FindFirstChild("HumanoidRootPart") then return nil end
+--     local root = character.HumanoidRootPart
+--     local closest = nil
+--    for _, other in pairs(Players:GetChildren()) do
+--       if table.find(friends,other.Name) then continue end 
+--       if other ~= plr  and other.Character and other.Character:FindFirstChild("HumanoidRootPart") then
+--          local dist = (other.Character.HumanoidRootPart.Position - root.Position).Magnitude
+--          if dist > maxRadius then
+--             continue
+--          end
+--          closest = other
+--       end
+--    end
+-- if closest then
+-- return closest.Character
+-- end
+-- end
 
 
 
