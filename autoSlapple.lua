@@ -8,7 +8,7 @@ function inArena()
       inArena()
       return
    end
-   if not plr.Character:FindFirstChild("isInArena") then
+   if not plr.Character:FindFirstChild("isInArena") or plr.Character.Humanoid.Health == 0 then
       task.wait(1)
       inArena()
       return
@@ -21,19 +21,31 @@ function inArena()
        end
    end
 end
-function tp()
-    
- local placeId = game.PlaceId
-    local options = Instance.new("TeleportOptions")
-    
-    local success, result = pcall(function()
-        return TeleportService:Teleport(placeId, plr, options)
-    end)
-    
-    if not success then
-        warn("Ошибка телепортации: " .. tostring(result))
-    end
+
+function Serverhop()
+   task.spawn(function()
+   while task.wait(3) do
+      local servers = {}
+      local req = game:HttpGet("https://games.roblox.com/v1/games/"..tostring(game.PlaceId).."/servers/Public?sortOrder=Desc&limit=100&excludeFullGames=true")
+      local body = game:GetService("HttpService"):JSONDecode(req)
+      if body and body.data then
+         for i, v in next, body.data do
+            if type(v) == "table" and tonumber(v.playing) and tonumber(v.maxPlayers) and v.playing < v.maxPlayers and v.id ~= game.JobId then
+               table.insert(servers, 1, v.id)
+            end
+         end
+      end 
+      if #servers > 0 then
+          print("не тот же сервер")
+         game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], game:GetService("Players").LocalPlayer)
+      else
+         print("тот же сервер")
+         game:GetService("TeleportService"):Teleport(game.PlaceId, game:GetService("Players").LocalPlayer)
+      end
+   end
+end)
 end
+
 
 
 function CollectSlapple(obj)
@@ -54,7 +66,7 @@ function sborslapov()
    end
    plr.Character.HumanoidRootPart.Anchored = false
    task.wait(2)
-   tp()
+   Serverhop()
 end
 
 
