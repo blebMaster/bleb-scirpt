@@ -112,6 +112,7 @@ local camera = Workspace.CurrentCamera
 local humanoidForHeal = nil
 local bhop = false
 local pressedD = false
+local pressedA = false
 local tpdist = 10
 local tpcd = 2
 local TpSpeed = false
@@ -830,19 +831,7 @@ RunService.Heartbeat:Connect(function()
 end)
 
 
-RunService.Heartbeat:Connect(function()
-   if bhop then
-      local leg = plr.Character:FindFirstChild("Right Leg")
-      local leg2 = plr.Character:FindFirstChild("Left Leg")
-      leg.CanCollide = false
-      leg.CanTouch = false
-      if pressedD then
-          leg.Position = leg2.Position + (leg2.CFrame.RightVector * SpeedStrengh)
-      else
-          leg.Position = leg2.Position - (leg2.CFrame.RightVector * SpeedStrengh)
-      end
-   end
-end)
+
 
 
 
@@ -999,8 +988,6 @@ function youInragdoll()
    local leg2 = plr.Character:FindFirstChild("Left Leg")
     if speedsUsed  then
       leg.Position = leg2.Position + (leg2.CFrame.RightVector * 1)
-      leg.CanCollide = true
-      leg.CanTouch = true
    end
    while plr.Character:FindFirstChild("FakePart Right Arm") do
    if plr.Character.Humanoid.Health <= 0 then break end
@@ -1008,8 +995,6 @@ function youInragdoll()
    end 
    if speedsUsed then
       leg.Position = leg2.Position + (leg2.CFrame.RightVector * SpeedStrengh)
-      leg.CanCollide = false
-      leg.CanTouch = false
    end
    youInRagdoll = false
 end
@@ -1126,6 +1111,9 @@ function onInputBegan(input, gameProcessed)
       if input.KeyCode == Enum.KeyCode.D then
       pressedD = true
       end
+       if input.KeyCode == Enum.KeyCode.A then
+      pressedA = true
+      end
 end
 
 function onInputEnded(input, gameProcessedEvent)
@@ -1134,6 +1122,9 @@ function onInputEnded(input, gameProcessedEvent)
  end
   if input.KeyCode == Enum.KeyCode.D then
   pressedD = false
+ end
+ if input.KeyCode == Enum.KeyCode.A then
+  pressedA = false
  end
 end
 
@@ -1196,12 +1187,7 @@ function smartHumanizedTurn(target)
         local targetCFrame = CFrame.lookAt(HRP.Position, Vector3.new(targetHRP.Position.X, HRP.Position.Y, targetHRP.Position.Z))
 
         local step = 0 
-        
-        if alpha < 0.75 then
-            step = math.random(1, 15) / 100
-        else
-            step = math.random(1, 10) / 100
-        end 
+        step = math.random(10, 40) / 100
        
         local multiple = math.random(100000,150000)
         local microNoise = math.random(100, 10000)/ multiple
@@ -1212,7 +1198,7 @@ function smartHumanizedTurn(target)
             break
         end
         HRP.CFrame = HRP.CFrame:Lerp(targetCFrame, alpha)
-        task.wait(0.01)
+        task.wait(0.05)
     end
     print(time)
     plr.Character.Humanoid.AutoRotate = true
@@ -1724,9 +1710,26 @@ end
 end
 
 
-
-
-
+delay(5,function()
+   task.spawn(function()
+      while task.wait(0.1) do
+         if bhop then
+            local leg = plr.Character:FindFirstChild("Right Leg")
+            local leg2 = plr.Character:FindFirstChild("Left Leg")
+            leg.CanTouch = false
+            if pressedA and pressedD then
+               leg.Position = leg2.Position + (leg2.CFrame.RightVector * 1)
+            elseif pressedD then
+               leg.Position = leg2.Position + (leg2.CFrame.RightVector * SpeedStrengh)
+            elseif pressedA then 
+               leg.Position = leg2.Position - (leg2.CFrame.RightVector * SpeedStrengh)
+            else
+               leg.Position = leg2.Position + (leg2.CFrame.RightVector * 1)
+            end
+         end
+      end   
+   end)
+end)
 delay(5,espUpd)
 delay(5,updStat)
 delay(5,tpSpeed)
